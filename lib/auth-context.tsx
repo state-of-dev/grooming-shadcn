@@ -4,7 +4,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
-// Define the user profile and business profile interfaces as per your existing structure
 interface UserProfile {
   id: string
   email: string
@@ -18,7 +17,7 @@ interface BusinessProfile {
   owner_id: string
   business_name: string
   slug: string
-  // Add other fields as necessary
+  setup_completed: boolean
 }
 
 interface AuthContextType {
@@ -28,8 +27,9 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: AuthError | null }>
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error?: AuthError | null }>
+  signUp: (email: string, password: string, fullName: string, role?: 'customer' | 'groomer') => Promise<{ error?: AuthError | null }>
   signOut: () => Promise<{ error?: AuthError | null }>
+  refreshBusinessProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -41,108 +41,153 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        if (error) throw error
-        setSession(session)
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await fetchUserProfile(session.user.id, session.user)
-        }
-      } catch (error) {
-        console.error('Error fetching session:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSession()
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (event === 'SIGNED_IN' && session?.user) {
-        await fetchUserProfile(session.user.id, session.user)
-      } else if (event === 'SIGNED_OUT') {
-        setProfile(null)
-        setBusinessProfile(null)
-      }
-    })
-
-    return () => {
-      authListener.subscription.unsubscribe()
-    }
-  }, [])
-
-  const fetchUserProfile = async (userId: string, user: User) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    if (error && error.code === 'PGRST116') { // No profile found, create one
-      const { data: newProfile, error: createError } = await supabase
+  // Fetch user profile from database
+  const fetchUserProfile = async (userId: string, userEmail: string) => {
+    try {
+      const { data, error } = await supabase
         .from('user_profiles')
-        .insert({
-          id: userId,
-          email: user.email!,
-          full_name: user.user_metadata.full_name,
-          role: user.user_metadata.role || 'customer',
-        })
-        .select()
+        .select('*')
+        .eq('id', userId)
         .single()
 
-      if (createError) {
-        console.error('Error creating profile:', createError)
-      } else {
-        setProfile(newProfile as UserProfile)
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const role = userEmail.includes('groomer') ? 'groomer' : 'customer'
+        const { data: newProfile } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: userId,
+            email: userEmail,
+            full_name: user?.user_metadata?.full_name || 'Usuario',
+            role: role
+          })
+          .select()
+          .single()
+
+        if (newProfile) {
+          setProfile(newProfile)
+          if (role === 'groomer') {
+            await fetchBusinessProfile(userId)
+          }
+        }
+      } else if (data) {
+        setProfile(data)
+        if (data.role === 'groomer') {
+          await fetchBusinessProfile(userId)
+        }
       }
-    } else if (data) {
-      setProfile(data as UserProfile)
-      if ((data as UserProfile).role === 'groomer') {
-        await fetchBusinessProfile(userId)
-      }
-    } else if (error) {
+    } catch (error) {
       console.error('Error fetching profile:', error)
     }
   }
 
+  // Fetch business profile for groomers
   const fetchBusinessProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('business_profiles')
-      .select('*')
-      .eq('owner_id', userId)
-      .single()
+    try {
+      const { data } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('owner_id', userId)
+        .single()
 
-    if (data) {
-      setBusinessProfile(data as BusinessProfile)
-    } else if (error && error.code !== 'PGRST116') {
+      if (data) {
+        setBusinessProfile(data)
+      }
+    } catch (error) {
       console.error('Error fetching business profile:', error)
     }
   }
 
-  const signIn = async (email: string, password: string) => {
-    return supabase.auth.signInWithPassword({ email, password })
+  // Refresh business profile
+  const refreshBusinessProfile = async () => {
+    if (user?.id && profile?.role === 'groomer') {
+      await fetchBusinessProfile(user.id)
+    }
   }
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    return supabase.auth.signUp({
+  // Initialize auth
+  useEffect(() => {
+    let mounted = true
+
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+
+          if (session?.user) {
+            await fetchUserProfile(session.user.id, session.user.email!)
+          }
+
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Auth init error:', error)
+        if (mounted) setLoading(false)
+      }
+    }
+
+    initAuth()
+
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return
+
+        setSession(session)
+        setUser(session?.user ?? null)
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          await fetchUserProfile(session.user.id, session.user.email!)
+        } else if (event === 'SIGNED_OUT') {
+          setProfile(null)
+          setBusinessProfile(null)
+        }
+
+        setLoading(false)
+      }
+    )
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error }
+  }
+
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role: 'customer' | 'groomer' = 'customer'
+  ) => {
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-          role: 'customer' // Default role, can be expanded
+          role: role
         }
       }
     })
+    return { error }
   }
 
   const signOut = async () => {
-    return supabase.auth.signOut()
+    setProfile(null)
+    setBusinessProfile(null)
+    setUser(null)
+    setSession(null)
+
+    const { error } = await supabase.auth.signOut()
+    return { error }
   }
 
   const value = {
@@ -154,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    refreshBusinessProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

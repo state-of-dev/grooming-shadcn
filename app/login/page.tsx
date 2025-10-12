@@ -22,10 +22,11 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (user) {
+    if (user && !isLoading) {
+      // Don't redirect while still loading
       router.replace('/dashboard')
     }
-  }, [user, router])
+  }, [user, isLoading, router])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}

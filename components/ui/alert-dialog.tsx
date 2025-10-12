@@ -53,7 +53,7 @@ const AlertDialogHeader = ({
     className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
     {...props}
   />
-))
+)
 AlertDialogHeader.displayName = "AlertDialogHeader"
 
 const AlertDialogFooter = ({
@@ -64,7 +64,7 @@ const AlertDialogFooter = ({
     className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
     {...props}
   />
-))
+)
 AlertDialogFooter.displayName = "AlertDialogFooter"
 
 const AlertDialogTitle = React.forwardRef<
