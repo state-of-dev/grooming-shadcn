@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, CreditCard, Globe, ArrowRight } from "lucide-react"
+import { Calendar, CreditCard, Globe, ArrowRight, Check } from "lucide-react"
 
 export default function Home() {
   return (
@@ -73,6 +73,122 @@ export default function Home() {
                   Página profesional lista en minutos
                 </CardDescription>
               </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">Amado por profesionales</h2>
+            <p className="text-xl text-muted-foreground">Descubre por qué los mejores groomers eligen nuestra plataforma.</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card>
+              <CardContent className="pt-6">
+                <p className='italic'>"Esta plataforma ha revolucionado mi negocio. La gestión de citas en tiempo real es increíble y mis clientes aman la facilidad para reservar."</p>
+                <div className="flex items-center pt-4 mt-4 border-t">
+                  <div className="w-12 h-12 rounded-full bg-muted mr-4"></div>
+                  <div>
+                    <p className="font-semibold">Ana Pérez</p>
+                    <p className="text-sm text-muted-foreground">Groomer en Paws & Claws</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className='italic'>"Pasé de un sistema de agenda en papel a esto y la diferencia es abismal. Ahorro horas cada semana y tengo control total de mi agenda."</p>
+                <div className="flex items-center pt-4 mt-4 border-t">
+                  <div className="w-12 h-12 rounded-full bg-muted mr-4"></div>
+                  <div>
+                    <p className="font-semibold">Carlos López</p>
+                    <p className="text-sm text-muted-foreground">Dueño de Peludos Felices</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className='italic'>"La página web personalizada le da a mi negocio una imagen mucho más profesional. ¡Mis ingresos han aumentado un 20% desde que la uso!"</p>
+                <div className="flex items-center pt-4 mt-4 border-t">
+                  <div className="w-12 h-12 rounded-full bg-muted mr-4"></div>
+                  <div>
+                    <p className="font-semibold">Sofía Martínez</p>
+                    <p className="text-sm text-muted-foreground">Estilista Canina Independiente</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">Planes para cada negocio</h2>
+            <p className="text-xl text-muted-foreground">Elige el plan que mejor se adapte a tu tamaño y necesidades.</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-2xl">Básico</CardTitle>
+                <CardDescription>Ideal para empezar y negocios pequeños.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-4">
+                <div className="text-4xl font-bold">$25<span className="text-xl font-normal text-muted-foreground">/mes</span></div>
+                <ul className="space-y-2">
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Hasta 50 citas/mes</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />1 Página de negocio</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte por email</li>
+                </ul>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button className="w-full">Empezar Plan Básico</Button>
+              </div>
+            </Card>
+            <Card className="flex flex-col border-2 border-primary shadow-lg">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-2xl">Profesional</CardTitle>
+                  <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">MÁS POPULAR</div>
+                </div>
+                <CardDescription>Perfecto para negocios en crecimiento.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-4">
+                <div className="text-4xl font-bold">$59<span className="text-xl font-normal text-muted-foreground">/mes</span></div>
+                <ul className="space-y-2">
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Citas ilimitadas</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Página web personalizable</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Acepta pagos con tarjeta</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte prioritario</li>
+                </ul>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button className="w-full">Empezar Plan Pro</Button>
+              </div>
+            </Card>
+            <Card className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-2xl">Empresarial</CardTitle>
+                <CardDescription>Soluciones a medida para grandes volúmenes.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow space-y-4">
+                <div className="text-4xl font-bold">Contacto</div>
+                <ul className="space-y-2">
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Todo lo de Profesional</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Múltiples sucursales</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Roles y permisos de equipo</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte dedicado</li>
+                </ul>
+              </CardContent>
+              <div className="p-6 pt-0">
+                <Button variant="outline" className="w-full">Contactar Ventas</Button>
+              </div>
             </Card>
           </div>
         </div>
