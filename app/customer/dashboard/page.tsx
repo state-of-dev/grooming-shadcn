@@ -115,13 +115,14 @@ export default function CustomerDashboardPage() {
       setLoadingData(true)
 
       try {
-        // Get customer ID
+        // Get customer ID (use limit(1) to handle duplicates)
         console.log('Step 1: Getting customer profile...')
-        const { data: customer, error: customerError } = await supabase
+        const { data: customers, error: customerError } = await supabase
           .from('customers')
           .select('id')
           .eq('user_id', user.id)
-          .maybeSingle()
+          .order('created_at', { ascending: false })
+          .limit(1)
 
         if (customerError) {
           console.error('❌ Error loading customer:', customerError)
@@ -129,10 +130,17 @@ export default function CustomerDashboardPage() {
           return
         }
 
-        if (!customer) {
-          console.log('⚠️ No customer profile found')
-          setLoadingData(false)
+        if (!customers || customers.length === 0) {
+          console.log('⚠️ No customer profile found, redirecting to onboarding')
+          router.replace('/customer/onboarding?returnTo=/customer/dashboard')
           return
+        }
+
+        const customer = customers[0]
+
+        // Log warning if duplicates found
+        if (customers.length > 1) {
+          console.warn('⚠️ Multiple customer profiles found for user, using most recent')
         }
 
         console.log('✅ Customer found:', customer.id)

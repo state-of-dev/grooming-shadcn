@@ -208,7 +208,8 @@ export default function BookServicePage() {
       selectedServiceIndex,
       hasService: !!services[selectedServiceIndex!],
       hasBusiness: !!business,
-      user: user ? user.id : 'null'
+      user: user ? user.id : 'null',
+      selectedPetId
     })
 
     if (selectedServiceIndex === null || !services[selectedServiceIndex] || !business) {
@@ -216,8 +217,21 @@ export default function BookServicePage() {
       return
     }
 
+    // Validate pet selection for authenticated users
+    if (user && !selectedPetId) {
+      console.log('❌ Validation failed - no pet selected')
+      alert('Por favor selecciona una mascota')
+      return
+    }
+
     const selectedService = services[selectedServiceIndex]
     console.log('✅ Selected service:', selectedService.name)
+
+    // Find selected pet info
+    const selectedPet = pets.find(p => p.id === selectedPetId)
+    if (user && selectedPet) {
+      console.log('✅ Selected pet:', selectedPet.name)
+    }
 
     // Store selection in localStorage for the booking flow
     const bookingState: BookingState = {
@@ -225,6 +239,8 @@ export default function BookServicePage() {
       businessId: business.id,
       businessName: business.business_name,
       service: selectedService,
+      selectedPet: selectedPet,
+      petId: selectedPetId || undefined,
       step: 'datetime'
     }
 
@@ -366,9 +382,9 @@ export default function BookServicePage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver al Marketplace
             </Button>
-            <Badge variant="secondary">Paso 1 de 4</Badge>
+            <Badge variant="secondary">Paso 1 de 3</Badge>
           </div>
-          <Progress value={25} className="h-2" />
+          <Progress value={33} className="h-2" />
         </div>
       </div>
 
@@ -449,12 +465,73 @@ export default function BookServicePage() {
           ))}
         </div>
 
+        {/* Pet selector for authenticated users */}
+        {user && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PawPrint className="w-5 h-5 text-primary" />
+                Selecciona tu Mascota
+              </CardTitle>
+              <CardDescription>
+                Elige la mascota que recibirá el servicio
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingPets ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+                  <span className="text-sm text-muted-foreground">Cargando mascotas...</span>
+                </div>
+              ) : pets.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    No tienes mascotas registradas. Por favor completa tu perfil primero.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push('/customer/onboarding?returnTo=' + window.location.pathname)}
+                  >
+                    Completar Perfil
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="pet-select">Mascota *</Label>
+                  <Select
+                    value={selectedPetId || ''}
+                    onValueChange={setSelectedPetId}
+                  >
+                    <SelectTrigger id="pet-select" className="w-full">
+                      <SelectValue placeholder="Selecciona una mascota" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pets.map((pet) => (
+                        <SelectItem key={pet.id} value={pet.id}>
+                          <div className="flex items-center gap-2">
+                            <PawPrint className="w-4 h-4" />
+                            <span>{pet.name}</span>
+                            <span className="text-muted-foreground text-sm">
+                              ({pet.species === 'dog' ? 'Perro' : 'Gato'}
+                              {pet.breed && ` • ${pet.breed}`})
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Continue button */}
         <div className="mt-12 flex justify-center">
           <Button
             size="lg"
             onClick={handleContinue}
-            disabled={!selectedService}
+            disabled={!selectedService || (user && !selectedPetId)}
             className="min-w-[200px]"
           >
             Continuar

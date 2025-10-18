@@ -402,7 +402,7 @@ export default function ConfirmationPage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Editar Información
             </Button>
-            <Badge variant="secondary">Paso 4 de 4</Badge>
+            <Badge variant="secondary">Paso 3 de 3</Badge>
           </div>
           <Progress value={100} className="h-2" />
         </div>

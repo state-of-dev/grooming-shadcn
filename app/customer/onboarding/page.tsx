@@ -139,6 +139,19 @@ export default function CustomerOnboarding() {
     setErrors({})
 
     try {
+      // Check if customer already exists
+      const { data: existingCheck } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (existingCheck) {
+        console.log('Customer already exists, redirecting...')
+        router.push(returnTo)
+        return
+      }
+
       // Create customer record
       const { data: newCustomer, error: customerError } = await supabase
         .from('customers')

@@ -272,9 +272,9 @@ export default function BookDatetimePage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Cambiar Servicio
             </Button>
-            <Badge variant="secondary">Paso 2 de 4</Badge>
+            <Badge variant="secondary">Paso 2 de 3</Badge>
           </div>
-          <Progress value={50} className="h-2" />
+          <Progress value={67} className="h-2" />
         </div>
       </div>
 
