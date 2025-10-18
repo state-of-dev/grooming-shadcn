@@ -59,7 +59,7 @@ export default function CustomerDashboardPage() {
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="hover:border-primary transition-colors cursor-pointer">
-            <Link href="/search">
+            <Link href="/marketplace">
               <CardHeader>
                 <Search className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle>Buscar Grooming</CardTitle>
@@ -101,7 +101,7 @@ export default function CustomerDashboardPage() {
               <p className="font-medium">No tienes citas programadas</p>
               <p className="text-sm mt-2">¡Agenda tu primera cita!</p>
               <Button asChild className="mt-4">
-                <Link href="/search">Buscar servicios</Link>
+                <Link href="/marketplace">Buscar servicios</Link>
               </Button>
             </div>
           </CardContent>

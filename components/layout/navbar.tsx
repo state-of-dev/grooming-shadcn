@@ -15,6 +15,7 @@ export function Navbar() {
           </Link>
         </div>
         <nav className="flex flex-1 items-center space-x-4 text-sm text-muted-foreground">
+          <Link href="/marketplace" className="hover:text-primary transition-colors">Marketplace</Link>
           <Link href="#features" className="hover:text-primary transition-colors">Características</Link>
           <Link href="#pricing" className="hover:text-primary transition-colors">Precios</Link>
         </nav>

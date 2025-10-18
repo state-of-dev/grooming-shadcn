@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm install)"
+      "Bash(pnpm install)",
+      "Bash(pnpm dlx shadcn@latest add:*)",
+      "Read(//c/lffg/state-of-dev/grooming/src/**)",
+      "Bash(pnpm add:*)",
+      "Read(//c/lffg/state-of-dev/grooming/**)",
+      "Bash(cat supabase-migrations/add-setup-completed.sql)",
+      "Bash(node scripts/test-appointments-query.js)",
+      "Bash(node scripts/analyze-appointments-data.js)"
     ],
     "deny": [],
     "ask": []
