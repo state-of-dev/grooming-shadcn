@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
 
 interface DayHours {
   open: boolean
@@ -67,6 +68,7 @@ export default function BookDatetimePage() {
   const params = useParams()
   const router = useRouter()
   const businessSlug = params.slug as string
+  const { user } = useAuth()
 
   const [businessHours, setBusinessHours] = useState<BusinessHours | null>(null)
   const [bookingState, setBookingState] = useState<BookingState | null>(null)
@@ -194,7 +196,7 @@ export default function BookDatetimePage() {
     setSelectedTime(time)
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedDate || !selectedTime || !bookingState) return
 
     // Update booking state
@@ -202,11 +204,19 @@ export default function BookDatetimePage() {
       ...bookingState,
       selectedDate,
       selectedTime,
-      step: 'pet-info'
+      step: user ? 'confirmation' : 'pet-info'
     }
 
     localStorage.setItem('booking-state', JSON.stringify(updatedState))
-    router.push(`/business/${businessSlug}/book/pet-info`)
+
+    // If user is logged in, they should already have customer data from onboarding
+    // Skip pet-info and go directly to confirmation
+    if (user) {
+      router.push(`/business/${businessSlug}/book/confirmation`)
+    } else {
+      // Guest users need to fill in their info
+      router.push(`/business/${businessSlug}/book/pet-info`)
+    }
   }
 
   const getDaysInMonth = (date: Date) => {

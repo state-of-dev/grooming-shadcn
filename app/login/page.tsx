@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
-  const { signIn, user, loading } = useAuth()
+  const { signIn, user, profile, loading } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -22,11 +23,37 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (user && !isLoading) {
-      // Don't redirect while still loading
-      router.replace('/dashboard')
+    const handleRedirect = async () => {
+      if (!user || isLoading || !profile) return
+
+      console.log('🔍 Login - User logged in, checking redirect', { userId: user.id, role: profile.role })
+
+      // If customer, check if has customer profile
+      if (profile.role === 'customer') {
+        const { data: customerProfile } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        console.log('📋 Customer profile check:', customerProfile ? 'HAS PROFILE' : 'NO PROFILE')
+
+        if (!customerProfile) {
+          console.log('⚠️ First login - redirecting to onboarding')
+          router.replace('/customer/onboarding?returnTo=/marketplace')
+        } else {
+          console.log('✅ Has profile - redirecting to dashboard')
+          router.replace('/customer/dashboard')
+        }
+      } else {
+        // Groomer or other roles
+        console.log('💼 Non-customer - redirecting to /dashboard')
+        router.replace('/dashboard')
+      }
     }
-  }, [user, isLoading, router])
+
+    handleRedirect()
+  }, [user, profile, isLoading, router, loading])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}

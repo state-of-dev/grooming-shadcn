@@ -133,10 +133,17 @@ export default function BusinessSetupPage() {
         .from('business_profiles')
         .select('slug')
         .eq('slug', slug)
-        .single()
+        .maybeSingle()
+
+      // If there's an error, log it but assume available
+      if (error) {
+        console.error('Error checking slug:', error)
+        return true
+      }
 
       return !data // true if available (no data found)
-    } catch {
+    } catch (err) {
+      console.error('Exception checking slug:', err)
       return true // Available if query fails
     }
   }

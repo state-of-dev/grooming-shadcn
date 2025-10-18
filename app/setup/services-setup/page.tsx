@@ -70,7 +70,7 @@ const DEFAULT_SERVICES: Omit<Service, 'id'>[] = [
 
 export default function ServicesSetup() {
   const router = useRouter()
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading, refreshBusinessProfile } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -190,6 +190,9 @@ export default function ServicesSetup() {
         .from('business_profiles')
         .update({ setup_completed: true })
         .eq('id', business.id)
+
+      // Refresh the business profile in context to update setup_completed
+      await refreshBusinessProfile()
 
       // Success! Navigate to dashboard
       router.push('/dashboard/groomer')

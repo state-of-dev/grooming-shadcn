@@ -84,9 +84,15 @@ export default function BusinessHoursSetup() {
         .from('business_profiles')
         .select('business_name, business_hours')
         .eq('owner_id', user!.id)
-        .single()
+        .maybeSingle()
 
       if (error) {
+        console.error('Supabase error loading business:', error)
+        setErrors({ load: 'Error al cargar el perfil del negocio: ' + error.message })
+        return
+      }
+
+      if (!business) {
         setErrors({ load: 'No se encontró el perfil del negocio. Por favor completa primero la información básica.' })
         return
       }
@@ -99,7 +105,7 @@ export default function BusinessHoursSetup() {
       }
     } catch (error: any) {
       console.error('Error loading business data:', error)
-      setErrors({ load: 'Error al cargar datos del negocio' })
+      setErrors({ load: 'Error al cargar datos del negocio: ' + (error?.message || 'Error desconocido') })
     } finally {
       setIsLoadingData(false)
     }

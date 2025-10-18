@@ -8,13 +8,23 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Mail, Lock, User, Loader2, Briefcase, Heart, Eye, EyeOff } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Mail, Lock, User, Loader2, Briefcase, Heart, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
   const { signUp, user, loading: authLoading } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -25,7 +35,9 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
+    console.log('🔍 Register useEffect - User state:', user ? `User ID: ${user.id}` : 'No user')
     if (user) {
+      console.log('⚠️ User already logged in, redirecting to /dashboard')
       router.replace('/dashboard')
     }
   }, [user, router])
@@ -54,11 +66,16 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateForm()) return
+    console.log('🚀 Register form submitted')
+    if (!validateForm()) {
+      console.log('❌ Form validation failed')
+      return
+    }
 
     setIsLoading(true)
     setErrors({})
 
+    console.log('📝 Signing up user with role:', formData.role)
     const { error } = await signUp(
       formData.email,
       formData.password,
@@ -67,16 +84,20 @@ export default function RegisterPage() {
     )
 
     if (error) {
+      console.log('❌ Signup error:', error.message)
       setErrors({ submit: error.message })
       setIsLoading(false)
     } else {
-      // Redirect based on role
-      if (formData.role === 'groomer') {
-        router.push('/setup/business')
-      } else {
-        router.push('/customer/dashboard')
-      }
+      console.log('✅ Signup successful!')
+      setIsLoading(false)
+      // Show success modal for email confirmation
+      setShowSuccessModal(true)
     }
+  }
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false)
+    router.push('/login')
   }
 
   if (authLoading || user) {
@@ -235,6 +256,40 @@ export default function RegisterPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Success Modal */}
+      <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-500" />
+              </div>
+            </div>
+            <AlertDialogTitle className="text-center text-xl">
+              ¡Registro Exitoso!
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="text-center space-y-3">
+                <p className="text-base">
+                  Gracias por registrarte. Te hemos enviado un correo de confirmación a:
+                </p>
+                <p className="font-semibold text-foreground">
+                  {formData.email}
+                </p>
+                <p className="text-sm">
+                  Por favor, revisa tu bandeja de entrada y confirma tu cuenta para poder iniciar sesión.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleCloseSuccessModal} className="w-full">
+              Ir a Iniciar Sesión
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -167,7 +167,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     role: 'customer' | 'groomer' = 'customer'
   ) => {
-    const { error } = await supabase.auth.signUp({
+    console.log('🔐 AuthContext signUp called with role:', role)
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -177,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     })
+    console.log('🔐 SignUp result:', { userId: data?.user?.id, error: error?.message })
     return { error }
   }
 

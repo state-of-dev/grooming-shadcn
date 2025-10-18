@@ -18,6 +18,7 @@ import {
   MapPin
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
 
 interface BookingState {
   businessSlug: string
@@ -51,6 +52,7 @@ export default function ConfirmationPage() {
   const params = useParams()
   const router = useRouter()
   const businessSlug = params.slug as string
+  const { user } = useAuth()
 
   const [bookingState, setBookingState] = useState<BookingState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -59,33 +61,100 @@ export default function ConfirmationPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    // Load booking state from localStorage
-    const savedState = localStorage.getItem('booking-state')
-    if (!savedState) {
-      router.push(`/business/${businessSlug}/book`)
-      return
-    }
-
-    try {
-      const state = JSON.parse(savedState) as BookingState
-      if (
-        state.businessSlug !== businessSlug ||
-        state.step !== 'confirmation' ||
-        !state.selectedDate ||
-        !state.selectedTime ||
-        !state.customerInfo ||
-        !state.petInfo
-      ) {
+    const loadBookingData = async () => {
+      // Load booking state from localStorage
+      const savedState = localStorage.getItem('booking-state')
+      if (!savedState) {
         router.push(`/business/${businessSlug}/book`)
         return
       }
 
-      setBookingState(state)
-      setIsLoading(false)
-    } catch (error) {
-      router.push(`/business/${businessSlug}/book`)
+      try {
+        const state = JSON.parse(savedState) as BookingState
+
+        // Basic validation
+        if (
+          state.businessSlug !== businessSlug ||
+          state.step !== 'confirmation' ||
+          !state.selectedDate ||
+          !state.selectedTime
+        ) {
+          router.push(`/business/${businessSlug}/book`)
+          return
+        }
+
+        // If user is logged in and customerInfo/petInfo are missing, load them
+        if (user && (!state.customerInfo || !state.petInfo)) {
+          console.log('Loading customer data for logged in user...')
+
+          const { data: customer, error: customerError } = await supabase
+            .from('customers')
+            .select('id, name, email, phone')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+          if (customerError || !customer) {
+            console.error('Error loading customer:', customerError)
+            setError('No se encontró tu perfil. Por favor completa tus datos primero.')
+            setIsLoading(false)
+            return
+          }
+
+          // Load first pet (if exists)
+          const { data: pets } = await supabase
+            .from('pets')
+            .select('*')
+            .eq('customer_id', customer.id)
+            .limit(1)
+
+          const pet = pets?.[0]
+
+          // Update state with loaded data
+          state.customerInfo = {
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone
+          }
+
+          if (pet) {
+            state.petInfo = {
+              name: pet.name,
+              species: pet.species,
+              breed: pet.breed || '',
+              weight: pet.weight?.toString() || '',
+              notes: pet.notes || ''
+            }
+            state.petId = pet.id // Store pet ID to avoid creating duplicate
+            state.customerId = customer.id // Store customer ID
+          } else {
+            // No pet found, will create one with minimal data
+            state.petInfo = {
+              name: 'Mascota',
+              species: 'dog',
+              breed: '',
+              weight: '',
+              notes: ''
+            }
+          }
+
+          // Save updated state
+          localStorage.setItem('booking-state', JSON.stringify(state))
+        } else if (!state.customerInfo || !state.petInfo) {
+          // Guest user without data - redirect back
+          router.push(`/business/${businessSlug}/book`)
+          return
+        }
+
+        setBookingState(state)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error loading booking data:', error)
+        router.push(`/business/${businessSlug}/book`)
+      }
     }
-  }, [businessSlug, router])
+
+    loadBookingData()
+  }, [businessSlug, router, user])
 
   const handleConfirm = async () => {
     if (!bookingState) return
@@ -97,81 +166,165 @@ export default function ConfirmationPage() {
       console.log('Starting appointment creation...')
       console.log('Booking state:', bookingState)
 
-      // Step 1: Create or get customer
-      console.log('Step 1: Creating/getting customer...')
-      const { data: existingCustomer, error: customerCheckError } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', bookingState.customerInfo.email)
-        .maybeSingle()
-
-      if (customerCheckError) {
-        console.error('Error checking customer:', customerCheckError)
-        throw new Error('Error al verificar cliente: ' + customerCheckError.message)
-      }
-
+      // Step 1: Get customer (should exist if user came from onboarding)
+      console.log('Step 1: Getting customer...')
       let customerId: string
 
-      if (existingCustomer) {
-        console.log('Customer exists:', existingCustomer.id)
-        customerId = existingCustomer.id
-      } else {
-        console.log('Creating new customer...')
-        const { data: newCustomer, error: customerError } = await supabase
+      if (user) {
+        // User is logged in, get their customer profile
+        const { data: existingCustomer, error: customerCheckError } = await supabase
           .from('customers')
-          .insert({
-            name: bookingState.customerInfo.name,
-            email: bookingState.customerInfo.email,
-            phone: bookingState.customerInfo.phone
-          })
-          .select()
-          .single()
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
 
-        if (customerError) {
-          console.error('Error creating customer:', customerError)
-          throw new Error('Error al crear cliente: ' + customerError.message)
+        if (customerCheckError) {
+          console.error('Error checking customer:', customerCheckError)
+          throw new Error('Error al verificar cliente: ' + customerCheckError.message)
         }
 
-        console.log('New customer created:', newCustomer)
-        customerId = newCustomer.id
+        if (existingCustomer) {
+          console.log('Customer exists:', existingCustomer.id)
+          customerId = existingCustomer.id
+        } else {
+          // Shouldn't happen if validation worked, but create one just in case
+          console.log('Creating customer for logged in user...')
+          const { data: newCustomer, error: customerError } = await supabase
+            .from('customers')
+            .insert({
+              user_id: user.id,
+              name: bookingState.customerInfo.name,
+              email: bookingState.customerInfo.email,
+              phone: bookingState.customerInfo.phone
+            })
+            .select()
+            .single()
+
+          if (customerError) {
+            console.error('Error creating customer:', customerError)
+            throw new Error('Error al crear cliente: ' + customerError.message)
+          }
+
+          console.log('New customer created:', newCustomer)
+          customerId = newCustomer.id
+        }
+      } else {
+        // User not logged in - check by email (existing flow for non-logged users)
+        const { data: existingCustomer, error: customerCheckError } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('email', bookingState.customerInfo.email)
+          .maybeSingle()
+
+        if (customerCheckError) {
+          console.error('Error checking customer:', customerCheckError)
+          throw new Error('Error al verificar cliente: ' + customerCheckError.message)
+        }
+
+        if (existingCustomer) {
+          console.log('Customer exists:', existingCustomer.id)
+          customerId = existingCustomer.id
+        } else {
+          // Guest user - create customer without user_id
+          console.log('Creating guest customer...')
+          const { data: newCustomer, error: customerError } = await supabase
+            .from('customers')
+            .insert({
+              name: bookingState.customerInfo.name,
+              email: bookingState.customerInfo.email,
+              phone: bookingState.customerInfo.phone
+            })
+            .select()
+            .single()
+
+          if (customerError) {
+            console.error('Error creating customer:', customerError)
+            throw new Error('Error al crear cliente: ' + customerError.message)
+          }
+
+          console.log('New guest customer created:', newCustomer)
+          customerId = newCustomer.id
+        }
       }
 
-      // Step 2: Create pet
-      console.log('Step 2: Creating pet...')
-      const { data: newPet, error: petError } = await supabase
-        .from('pets')
-        .insert({
-          customer_id: customerId,
-          name: bookingState.petInfo.name,
-          species: bookingState.petInfo.species,
-          breed: bookingState.petInfo.breed || null,
-          weight: bookingState.petInfo.weight ? parseFloat(bookingState.petInfo.weight) : null,
-          notes: bookingState.petInfo.notes || null
-        })
-        .select()
-        .single()
+      // Step 2: Get pet ID (should already exist from onboarding)
+      console.log('Step 2: Getting pet ID...')
 
-      if (petError) {
-        console.error('Error creating pet:', petError)
-        throw new Error('Error al crear mascota: ' + petError.message)
+      let petId: string
+
+      // Check if we already have pet ID from loaded data
+      if (bookingState.petId) {
+        console.log('Using existing pet ID from booking state:', bookingState.petId)
+        petId = bookingState.petId
+      } else {
+        // Fallback: search for pet by name (shouldn't happen for logged-in users)
+        console.log('No pet ID in booking state, searching by name...')
+        const { data: existingPet, error: findPetError } = await supabase
+          .from('pets')
+          .select('*')
+          .eq('customer_id', customerId)
+          .eq('name', bookingState.petInfo.name)
+          .maybeSingle()
+
+        if (findPetError) {
+          console.error('Error finding pet:', findPetError)
+          throw new Error('Error al buscar mascota: ' + findPetError.message)
+        }
+
+        if (existingPet) {
+          console.log('Found existing pet:', existingPet.id)
+          petId = existingPet.id
+        } else {
+          // Only create new pet if absolutely necessary (guest users or edge cases)
+          console.log('⚠️ Creating new pet (should not happen for logged-in users)...')
+          const { data: newPet, error: petError } = await supabase
+            .from('pets')
+            .insert({
+              customer_id: customerId,
+              name: bookingState.petInfo.name,
+              species: bookingState.petInfo.species,
+              breed: bookingState.petInfo.breed || null,
+              weight: bookingState.petInfo.weight ? parseFloat(bookingState.petInfo.weight) : null,
+              notes: bookingState.petInfo.notes || null
+            })
+            .select()
+            .single()
+
+          if (petError) {
+            console.error('Error creating pet:', petError)
+            throw new Error('Error al crear mascota: ' + petError.message)
+          }
+
+          console.log('Pet created:', newPet)
+          petId = newPet.id
+        }
       }
-
-      console.log('Pet created:', newPet)
 
       // Step 3: Create appointment
       console.log('Step 3: Creating appointment...')
-      const appointmentDate = new Date(bookingState.selectedDate)
+
+      // Calculate end_time based on service duration
       const [hours, minutes] = bookingState.selectedTime.split(':')
+      const startDate = new Date()
+      startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+
+      // Add service duration (in minutes) to start time
+      const serviceDuration = bookingState.service.duration || 60 // Default 60 minutes if not specified
+      const endDate = new Date(startDate.getTime() + serviceDuration * 60000)
+      const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`
+
+      console.log('Calculated times:', { start: bookingState.selectedTime, end: endTime, duration: serviceDuration })
 
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
         .insert({
           business_id: bookingState.businessId,
           customer_id: customerId,
-          pet_id: newPet.id,
+          pet_id: petId,
           service_id: bookingState.service.id,
           appointment_date: bookingState.selectedDate,
           start_time: bookingState.selectedTime,
+          end_time: endTime,
           status: 'pending',
           total_amount: bookingState.service.price,
           notes: bookingState.petInfo.notes || null

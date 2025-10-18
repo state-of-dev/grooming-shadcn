@@ -6,6 +6,24 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,9 +32,12 @@ import {
   CheckCircle,
   Scissors,
   Loader2,
-  Tag
+  Tag,
+  UserPlus,
+  PawPrint
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
 
 interface Service {
   id: string
@@ -36,11 +57,21 @@ interface BusinessProfile {
   is_active: boolean
 }
 
+interface Pet {
+  id: string
+  name: string
+  species: string
+  breed: string | null
+}
+
 interface BookingState {
   businessSlug: string
   businessId: string
   businessName: string
   service: Service
+  selectedPet?: Pet
+  petId?: string
+  customerId?: string
   step: string
 }
 
@@ -48,12 +79,19 @@ export default function BookServicePage() {
   const params = useParams()
   const router = useRouter()
   const businessSlug = params.slug as string
+  const { user } = useAuth()
+
+  console.log('🔍 BookServicePage - Current user state:', user ? `User ID: ${user.id}` : 'No user')
 
   const [business, setBusiness] = useState<BusinessProfile | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedServiceIndex, setSelectedServiceIndex] = useState<number | null>(null)
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
+  const [pets, setPets] = useState<Pet[]>([])
+  const [loadingPets, setLoadingPets] = useState(false)
+  const [showOnboardingAlert, setShowOnboardingAlert] = useState(false)
 
   useEffect(() => {
     if (!businessSlug) {
@@ -63,6 +101,63 @@ export default function BookServicePage() {
     }
     loadBusiness()
   }, [businessSlug])
+
+  // Load user's pets if authenticated
+  useEffect(() => {
+    const loadPets = async () => {
+      if (!user) {
+        console.log('⏭️ No user, skipping pets load')
+        return
+      }
+
+      console.log('🐾 Loading pets for user:', user.id)
+      setLoadingPets(true)
+
+      try {
+        // Get customer ID
+        const { data: customer, error: customerError } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (customerError) {
+          console.error('❌ Error loading customer:', customerError)
+          setLoadingPets(false)
+          return
+        }
+
+        if (!customer) {
+          console.log('⚠️ No customer profile found')
+          setLoadingPets(false)
+          return
+        }
+
+        // Load pets
+        const { data: petsData, error: petsError } = await supabase
+          .from('pets')
+          .select('id, name, species, breed')
+          .eq('customer_id', customer.id)
+
+        if (petsError) {
+          console.error('❌ Error loading pets:', petsError)
+        } else {
+          console.log('✅ Pets loaded:', petsData?.length || 0)
+          setPets(petsData || [])
+          // Auto-select first pet if available
+          if (petsData && petsData.length > 0) {
+            setSelectedPetId(petsData[0].id)
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in loadPets:', error)
+      } finally {
+        setLoadingPets(false)
+      }
+    }
+
+    loadPets()
+  }, [user])
 
   const loadBusiness = async () => {
     try {
@@ -107,12 +202,22 @@ export default function BookServicePage() {
     setSelectedServiceIndex(index)
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    console.log('🚀 handleContinue called')
+    console.log('📊 State:', {
+      selectedServiceIndex,
+      hasService: !!services[selectedServiceIndex!],
+      hasBusiness: !!business,
+      user: user ? user.id : 'null'
+    })
+
     if (selectedServiceIndex === null || !services[selectedServiceIndex] || !business) {
+      console.log('❌ Validation failed - missing data')
       return
     }
 
     const selectedService = services[selectedServiceIndex]
+    console.log('✅ Selected service:', selectedService.name)
 
     // Store selection in localStorage for the booking flow
     const bookingState: BookingState = {
@@ -124,9 +229,58 @@ export default function BookServicePage() {
     }
 
     localStorage.setItem('booking-state', JSON.stringify(bookingState))
+    console.log('💾 Booking state saved to localStorage')
 
+    // Check if user is logged in and has a customer profile
+    if (user) {
+      console.log('👤 User detected, checking customer profile for user:', user.id)
+
+      const { data: customerProfile, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      console.log('📋 Customer profile query result:', {
+        hasProfile: !!customerProfile,
+        profileId: customerProfile?.id,
+        error: customerError
+      })
+
+      // If no customer profile, show alert
+      if (!customerProfile) {
+        console.log('⚠️ No customer profile found, showing onboarding alert')
+        console.log('🔔 Setting showOnboardingAlert to TRUE')
+        setShowOnboardingAlert(true)
+        console.log('🔔 showOnboardingAlert state updated')
+        return
+      }
+
+      console.log('✅ Customer profile exists, continuing to booking')
+    } else {
+      console.log('👻 No user logged in, continuing to booking (guest flow)')
+    }
+
+    console.log('🔀 Navigating to datetime page')
     router.push(`/business/${businessSlug}/book/datetime`)
   }
+
+  const handleGoToOnboarding = () => {
+    console.log('✅ User clicked "Completar Datos"')
+    const currentPath = `/business/${businessSlug}/book/datetime`
+    router.push(`/customer/onboarding?returnTo=${encodeURIComponent(currentPath)}`)
+  }
+
+  const handleCancelOnboarding = () => {
+    console.log('❌ User clicked "Cancelar y volver"')
+    setShowOnboardingAlert(false)
+    router.push('/marketplace')
+  }
+
+  // Log when showOnboardingAlert changes
+  useEffect(() => {
+    console.log('🔔 showOnboardingAlert changed:', showOnboardingAlert)
+  }, [showOnboardingAlert])
 
   // Helper function to group services by category
   const groupedServices = services.reduce((groups, service, index) => {
@@ -340,6 +494,30 @@ export default function BookServicePage() {
           </Card>
         )}
       </main>
+
+      {/* Onboarding Alert Dialog */}
+      <AlertDialog open={showOnboardingAlert} onOpenChange={setShowOnboardingAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              Completa tu Perfil
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Para continuar con la reserva, necesitas completar tus datos personales y de tu mascota.
+              Solo te tomará un minuto y podrás reservar citas más rápidamente en el futuro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelOnboarding}>
+              Cancelar y volver
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleGoToOnboarding}>
+              Completar Datos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
