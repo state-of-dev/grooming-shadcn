@@ -190,6 +190,18 @@ export default function BookServicePage() {
       setBusiness(businessData)
       setServices(realServices)
 
+      // Check if there's a preselected service from the business detail page
+      const preselectedServiceId = localStorage.getItem('preselected-service')
+      if (preselectedServiceId && realServices.length > 0) {
+        const serviceIndex = realServices.findIndex((s: Service) => s.id === preselectedServiceId)
+        if (serviceIndex !== -1) {
+          console.log('🎯 Pre-selecting service:', realServices[serviceIndex].name)
+          setSelectedServiceIndex(serviceIndex)
+        }
+        // Clear the preselected service after using it
+        localStorage.removeItem('preselected-service')
+      }
+
     } catch (error: any) {
       console.error('Error loading business:', error)
       setError('Error al cargar el negocio')

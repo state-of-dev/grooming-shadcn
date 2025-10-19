@@ -5,6 +5,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <Toaster />
+          <SonnerToaster position="top-right" richColors />
         </AuthProvider>
       </body>
     </html>
