@@ -141,10 +141,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: business.business_name,
       description: business.description || ''
     },
-    other: {
-      'rating': rating ? rating.average_rating.toString() : undefined,
-      'reviews': rating ? rating.total_reviews.toString() : undefined
-    }
+    ...(rating && {
+      other: {
+        'rating': rating.average_rating.toString(),
+        'reviews': rating.total_reviews.toString()
+      }
+    })
   }
 }
 
