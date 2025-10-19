@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
@@ -34,7 +34,7 @@ const STEPS = [
   { id: 2, title: 'Tu Mascota', icon: PawPrint }
 ]
 
-export default function CustomerOnboarding() {
+function CustomerOnboardingContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const returnTo = searchParams.get('returnTo') || '/marketplace'
@@ -495,5 +495,17 @@ export default function CustomerOnboarding() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function CustomerOnboarding() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    }>
+      <CustomerOnboardingContent />
+    </Suspense>
   )
 }
