@@ -329,13 +329,16 @@ export default function CustomerDashboardPage() {
             <h1 className="text-3xl font-bold">Mi Dashboard</h1>
             <p className="text-muted-foreground">Hola, {profile.full_name}!</p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            Cerrar Sesión
+          <Button asChild>
+            <Link href="/marketplace">
+              <Search className="w-4 h-4 mr-2" />
+              Buscar Grooming
+            </Link>
           </Button>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid gap-4 md:grid-cols-3">
+        {/* Quick Actions - Comentado temporalmente */}
+        {/* <div className="grid gap-4 md:grid-cols-3">
           <Card className="hover:border-primary transition-colors cursor-pointer">
             <Link href="/marketplace">
               <CardHeader>
@@ -365,7 +368,7 @@ export default function CustomerDashboardPage() {
               </CardHeader>
             </Link>
           </Card>
-        </div>
+        </div> */}
 
         {/* Upcoming Appointments */}
         <Card>
