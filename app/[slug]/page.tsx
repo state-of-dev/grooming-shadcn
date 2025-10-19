@@ -111,8 +111,8 @@ async function getBusinessRating(businessId: string) {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const { slug } = params
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
 
   if (RESERVED_ROUTES.includes(slug.toLowerCase())) {
     return {}
@@ -151,9 +151,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function BusinessPublicPage({
   params
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
-  const { slug } = params
+  const { slug } = await params
 
   // Verificar si es una ruta reservada
   if (RESERVED_ROUTES.includes(slug.toLowerCase())) {
