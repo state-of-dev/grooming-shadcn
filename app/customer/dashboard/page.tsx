@@ -445,7 +445,7 @@ export default function CustomerDashboardPage() {
                         </Button>
                         {appointment.business_profiles?.slug && (
                           <Button asChild variant="ghost" size="sm">
-                            <Link href={`${appointment.business_profiles.slug}`}>
+                            <Link href={`../${appointment.business_profiles.slug}`}>
                               Ver negocio
                             </Link>
                           </Button>
