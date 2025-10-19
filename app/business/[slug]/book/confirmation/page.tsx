@@ -347,7 +347,7 @@ export default function ConfirmationPage() {
 
       // Redirect to success page after 2 seconds
       setTimeout(() => {
-        router.push('/marketplace?success=true')
+        router.push('/customer/dashboard?success=true')
       }, 2000)
 
     } catch (error: any) {
@@ -382,7 +382,7 @@ export default function ConfirmationPage() {
               Recibirás un email de confirmación en {bookingState.customerInfo.email}
             </p>
             <div className="text-sm text-muted-foreground">
-              Redirigiendo al marketplace...
+              Redirigiendo al dashboard...
             </div>
           </CardContent>
         </Card>
