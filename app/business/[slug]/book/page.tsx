@@ -531,7 +531,7 @@ export default function BookServicePage() {
           <Button
             size="lg"
             onClick={handleContinue}
-            disabled={!selectedService || (user && !selectedPetId)}
+            disabled={!selectedService || (user ? !selectedPetId : false)}
             className="min-w-[200px]"
           >
             Continuar
