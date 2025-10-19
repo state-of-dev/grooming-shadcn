@@ -177,7 +177,7 @@ export default function CustomerDashboardPage() {
         } else {
           console.log('✅ Appointments loaded:', appointmentsData?.length || 0)
           console.log('Appointments data:', appointmentsData)
-          setAppointments((appointmentsData || []) as Appointment[])
+          setAppointments((appointmentsData || []) as unknown as Appointment[])
         }
 
         // Load pets
