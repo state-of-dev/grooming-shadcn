@@ -24,6 +24,13 @@ import {
   Loader2
 } from 'lucide-react'
 
+interface Pet {
+  id: string
+  name: string
+  species: string
+  breed: string | null
+}
+
 interface BookingState {
   businessSlug: string
   businessId: string
@@ -37,6 +44,7 @@ interface BookingState {
   }
   selectedDate: string
   selectedTime: string
+  selectedPet?: Pet
   step: string
   customerInfo?: {
     name: string

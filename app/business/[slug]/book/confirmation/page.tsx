@@ -20,6 +20,13 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth-context'
 
+interface Pet {
+  id: string
+  name: string
+  species: string
+  breed: string | null
+}
+
 interface BookingState {
   businessSlug: string
   businessId: string
@@ -45,6 +52,7 @@ interface BookingState {
     weight: string
     notes: string
   }
+  selectedPet?: Pet // The pet selected in the first step
   step: string
   petId?: string // Optional: ID of existing pet to avoid duplicates
   customerId?: string // Optional: ID of existing customer
@@ -102,40 +110,102 @@ export default function ConfirmationPage() {
             return
           }
 
-          // Load first pet (if exists)
-          const { data: pets } = await supabase
-            .from('pets')
-            .select('*')
-            .eq('customer_id', customer.id)
-            .limit(1)
-
-          const pet = pets?.[0]
-
-          // Update state with loaded data
+          // Update state with customer data
           state.customerInfo = {
             name: customer.name,
             email: customer.email,
             phone: customer.phone
           }
 
-          if (pet) {
+          // If we have a selected pet from the booking state, use it
+          // Otherwise, load first pet (for backward compatibility)
+          if (state.selectedPet) {
+            // Use the pet that was selected in the first step
             state.petInfo = {
-              name: pet.name,
-              species: pet.species,
-              breed: pet.breed || '',
-              weight: pet.weight?.toString() || '',
-              notes: pet.notes || ''
-            }
-            state.petId = pet.id // Store pet ID to avoid creating duplicate
-            state.customerId = customer.id // Store customer ID
-          } else {
-            // No pet found, will create one with minimal data
-            state.petInfo = {
-              name: 'Mascota',
-              species: 'dog',
-              breed: '',
-              weight: '',
+              name: state.selectedPet.name,
+              species: state.selectedPet.species,
+              breed: state.selectedPet.breed || '',
+              weight: '', // Weight might not be available in the initial selectedPet
               notes: ''
+            }
+            state.petId = state.selectedPet.id // Use the selected pet ID
+            state.customerId = customer.id // Store customer ID
+          } else if (state.petId) {
+            // If we have a petId but no pet info, load the specific pet
+            const { data: pet } = await supabase
+              .from('pets')
+              .select('*')
+              .eq('id', state.petId)
+              .eq('customer_id', customer.id)
+              .maybeSingle()
+
+            if (pet) {
+              state.petInfo = {
+                name: pet.name,
+                species: pet.species,
+                breed: pet.breed || '',
+                weight: pet.weight?.toString() || '',
+                notes: pet.notes || ''
+              }
+              state.customerId = customer.id // Store customer ID
+            } else {
+              // Pet not found, fallback to loading first pet
+              const { data: pets } = await supabase
+                .from('pets')
+                .select('*')
+                .eq('customer_id', customer.id)
+                .limit(1)
+
+              const firstPet = pets?.[0]
+              if (firstPet) {
+                state.petInfo = {
+                  name: firstPet.name,
+                  species: firstPet.species,
+                  breed: firstPet.breed || '',
+                  weight: firstPet.weight?.toString() || '',
+                  notes: firstPet.notes || ''
+                }
+                state.petId = firstPet.id // Store pet ID to avoid creating duplicate
+                state.customerId = customer.id // Store customer ID
+              } else {
+                // No pet found, will create one with minimal data
+                state.petInfo = {
+                  name: 'Mascota',
+                  species: 'dog',
+                  breed: '',
+                  weight: '',
+                  notes: ''
+                }
+              }
+            }
+          } else {
+            // No selected pet or petId, load first pet (fallback for older flows)
+            const { data: pets } = await supabase
+              .from('pets')
+              .select('*')
+              .eq('customer_id', customer.id)
+              .limit(1)
+
+            const firstPet = pets?.[0]
+            if (firstPet) {
+              state.petInfo = {
+                name: firstPet.name,
+                species: firstPet.species,
+                breed: firstPet.breed || '',
+                weight: firstPet.weight?.toString() || '',
+                notes: firstPet.notes || ''
+              }
+              state.petId = firstPet.id // Store pet ID to avoid creating duplicate
+              state.customerId = customer.id // Store customer ID
+            } else {
+              // No pet found, will create one with minimal data
+              state.petInfo = {
+                name: 'Mascota',
+                species: 'dog',
+                breed: '',
+                weight: '',
+                notes: ''
+              }
             }
           }
 
