@@ -46,6 +46,8 @@ interface BookingState {
     notes: string
   }
   step: string
+  petId?: string // Optional: ID of existing pet to avoid duplicates
+  customerId?: string // Optional: ID of existing customer
 }
 
 export default function ConfirmationPage() {
