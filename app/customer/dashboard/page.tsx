@@ -46,13 +46,13 @@ interface Appointment {
   business_profiles: {
     business_name: string
     slug: string
-  }
+  } | null
   services: {
     name: string
-  }
+  } | null
   pets: {
     name: string
-  }
+  } | null
 }
 
 interface Pet {
@@ -177,7 +177,7 @@ export default function CustomerDashboardPage() {
         } else {
           console.log('✅ Appointments loaded:', appointmentsData?.length || 0)
           console.log('Appointments data:', appointmentsData)
-          setAppointments(appointmentsData || [])
+          setAppointments((appointmentsData || []) as Appointment[])
         }
 
         // Load pets
@@ -397,7 +397,7 @@ export default function CustomerDashboardPage() {
                   >
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{appointment.services.name}</h3>
+                        <h3 className="font-semibold">{appointment.services?.name || 'Servicio'}</h3>
                         <span className={`text-xs px-2 py-1 rounded-full ${
                           appointment.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
                           appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' :
@@ -410,7 +410,7 @@ export default function CustomerDashboardPage() {
                       </div>
                       <p className="text-sm text-muted-foreground">
                         <MapPin className="inline w-3 h-3 mr-1" />
-                        {appointment.business_profiles.business_name}
+                        {appointment.business_profiles?.business_name || 'Negocio'}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         <Calendar className="inline w-3 h-3 mr-1" />
@@ -427,7 +427,7 @@ export default function CustomerDashboardPage() {
                       </p>
                       <p className="text-sm">
                         <Heart className="inline w-3 h-3 mr-1" />
-                        Para: <span className="font-medium">{appointment.pets.name}</span>
+                        Para: <span className="font-medium">{appointment.pets?.name || 'Mascota'}</span>
                       </p>
                     </div>
                     <div className="text-right space-y-2">
@@ -440,11 +440,13 @@ export default function CustomerDashboardPage() {
                         >
                           Ver detalles
                         </Button>
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/business/${appointment.business_profiles.slug}`}>
-                            Ver negocio
-                          </Link>
-                        </Button>
+                        {appointment.business_profiles?.slug && (
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/business/${appointment.business_profiles.slug}`}>
+                              Ver negocio
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -542,7 +544,7 @@ export default function CustomerDashboardPage() {
           {selectedAppointment && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold text-lg mb-2">{selectedAppointment.services.name}</h3>
+                <h3 className="font-semibold text-lg mb-2">{selectedAppointment.services?.name || 'Servicio'}</h3>
                 <span className={`text-xs px-3 py-1 rounded-full ${
                   selectedAppointment.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
                   selectedAppointment.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' :
@@ -559,7 +561,7 @@ export default function CustomerDashboardPage() {
                   <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Negocio</p>
-                    <p className="text-muted-foreground">{selectedAppointment.business_profiles.business_name}</p>
+                    <p className="text-muted-foreground">{selectedAppointment.business_profiles?.business_name || 'Negocio'}</p>
                   </div>
                 </div>
 
@@ -590,7 +592,7 @@ export default function CustomerDashboardPage() {
                   <Heart className="w-4 h-4 mt-0.5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Mascota</p>
-                    <p className="text-muted-foreground">{selectedAppointment.pets.name}</p>
+                    <p className="text-muted-foreground">{selectedAppointment.pets?.name || 'Mascota'}</p>
                   </div>
                 </div>
 
