@@ -18,7 +18,6 @@ export default function DashboardPage() {
     }
 
     if (profile) {
-      // Redirect based on role
       if (profile.role === 'customer') {
         router.replace('/customer/dashboard')
       } else if (profile.role === 'groomer') {

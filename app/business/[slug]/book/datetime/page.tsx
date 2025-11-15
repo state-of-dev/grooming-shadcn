@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth-context'
+import { AvailabilityTimePicker } from '@/components/booking/availability-time-picker'
 
 interface DayHours {
   open: boolean
@@ -74,10 +75,8 @@ export default function BookDatetimePage() {
   const [bookingState, setBookingState] = useState<BookingState | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
-  const [loadingSlots, setLoadingSlots] = useState(false)
 
   useEffect(() => {
     // Load booking state from localStorage
@@ -99,12 +98,6 @@ export default function BookDatetimePage() {
       router.push(`/business/${businessSlug}/book`)
     }
   }, [businessSlug, router])
-
-  useEffect(() => {
-    if (selectedDate && businessHours && bookingState) {
-      loadTimeSlots(selectedDate)
-    }
-  }, [selectedDate, businessHours, bookingState])
 
   const loadBusinessHours = async (businessId: string) => {
     try {
@@ -128,66 +121,7 @@ export default function BookDatetimePage() {
     }
   }
 
-  const loadTimeSlots = (date: string) => {
-    if (!businessHours || !bookingState) return
-
-    setLoadingSlots(true)
-    try {
-      const dateObj = new Date(date + 'T00:00:00')
-      const dayOfWeek = DAYS_OF_WEEK[dateObj.getDay() === 0 ? 6 : dateObj.getDay() - 1]
-      const dayHours = businessHours[dayOfWeek as keyof BusinessHours]
-
-      if (!dayHours || !dayHours.open) {
-        setTimeSlots([])
-        return
-      }
-
-      // Generate time slots based on business hours
-      const slots: TimeSlot[] = []
-      const serviceDuration = bookingState.service.duration
-      const openTime = dayHours.start
-      const closeTime = dayHours.end
-
-      let currentTime = openTime
-      while (currentTime < closeTime) {
-        const [hours, minutes] = currentTime.split(':').map(Number)
-        const slotTime = new Date()
-        slotTime.setHours(hours, minutes, 0, 0)
-
-        // Check if there's enough time for the service
-        const endTime = new Date(slotTime.getTime() + serviceDuration * 60000)
-        const closeDateTime = new Date()
-        const [closeHours, closeMinutes] = closeTime.split(':').map(Number)
-        closeDateTime.setHours(closeHours, closeMinutes, 0, 0)
-
-        if (endTime <= closeDateTime) {
-          // Check if slot is in the past
-          const now = new Date()
-          const slotDateTime = new Date(date + 'T' + currentTime)
-          const isAvailable = slotDateTime > now
-
-          slots.push({
-            time: currentTime,
-            available: isAvailable,
-            reason: !isAvailable ? 'Hora pasada' : undefined
-          })
-        }
-
-        // Move to next 30-minute slot
-        const nextSlot = new Date(slotTime.getTime() + 30 * 60000)
-        currentTime = nextSlot.toTimeString().slice(0, 5)
-      }
-
-      setTimeSlots(slots)
-    } catch (error) {
-      console.error('Error generating time slots:', error)
-      setTimeSlots([])
-    } finally {
-      setLoadingSlots(false)
-    }
-  }
-
-  const handleDateSelect = (date: string) => {
+  const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
     setSelectedTime(null)
   }
@@ -199,10 +133,31 @@ export default function BookDatetimePage() {
   const handleContinue = async () => {
     if (!selectedDate || !selectedTime || !bookingState) return
 
+    // Validar disponibilidad antes de continuar
+    const response = await fetch('/api/availability/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_id: bookingState.businessId,
+        appointment_date: selectedDate.toISOString().split('T')[0],
+        start_time: selectedTime,
+        service_duration: bookingState.service.duration
+      })
+    })
+
+    const validation = await response.json()
+
+    if (!validation.available) {
+      alert(`Este horario ya no está disponible: ${validation.reason}`)
+      // Recargar disponibilidad
+      setSelectedTime(null)
+      return
+    }
+
     // Update booking state
     const updatedState = {
       ...bookingState,
-      selectedDate,
+      selectedDate: selectedDate.toISOString().split('T')[0],
       selectedTime,
       step: user ? 'confirmation' : 'pet-info'
     }
@@ -342,12 +297,12 @@ export default function BookDatetimePage() {
                     const isCurrentMonth = date.getMonth() === currentMonthNumber
                     const isToday = date.toDateString() === today.toDateString()
                     const isPast = date < today && !isToday
-                    const isSelected = selectedDate === dateStr
+                    const isSelected = selectedDate && selectedDate.toISOString().split('T')[0] === dateStr
 
                     return (
                       <button
                         key={index}
-                        onClick={() => !isPast && isCurrentMonth && handleDateSelect(dateStr)}
+                        onClick={() => !isPast && isCurrentMonth && handleDateSelect(date)}
                         disabled={isPast || !isCurrentMonth}
                         className={`
                           aspect-square p-2 text-sm rounded-md transition-all
@@ -367,57 +322,14 @@ export default function BookDatetimePage() {
             </Card>
 
             {/* Time Slots */}
-            {selectedDate && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Horarios Disponibles
-                  </CardTitle>
-                  <CardDescription>
-                    {new Date(selectedDate).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loadingSlots ? (
-                    <div className="text-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Cargando horarios...</p>
-                    </div>
-                  ) : timeSlots.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Clock className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">No hay horarios disponibles en esta fecha</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot.time}
-                          onClick={() => slot.available && handleTimeSelect(slot.time)}
-                          disabled={!slot.available}
-                          className={`
-                            p-3 rounded-md text-sm font-medium transition-all
-                            ${slot.available
-                              ? selectedTime === slot.time
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-accent hover:bg-primary/10'
-                              : 'bg-muted text-muted-foreground cursor-not-allowed'
-                            }
-                          `}
-                        >
-                          {formatTime(slot.time)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            {selectedDate && bookingState && (
+              <AvailabilityTimePicker
+                businessId={bookingState.businessId}
+                selectedDate={selectedDate}
+                serviceDuration={bookingState.service.duration}
+                selectedTime={selectedTime}
+                onTimeSelect={handleTimeSelect}
+              />
             )}
           </div>
 
@@ -446,7 +358,7 @@ export default function BookDatetimePage() {
                   {selectedDate && selectedTime ? (
                     <div className="space-y-2">
                       <div className="font-semibold">
-                        {new Date(selectedDate).toLocaleDateString('es-ES', {
+                        {selectedDate.toLocaleDateString('es-ES', {
                           weekday: 'long',
                           year: 'numeric',
                           month: 'long',

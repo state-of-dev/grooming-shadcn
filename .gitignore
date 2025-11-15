@@ -32,6 +32,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-docs/
+sdocs/
 .claude/
-supabase-migrations/
+scripts/

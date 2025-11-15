@@ -236,11 +236,11 @@ export default function GroomerDashboardPage() {
         {/* Quick Actions */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="hover:border-primary transition-colors cursor-pointer">
-            <Link href="/dashboard/calendar">
+            <Link href="/dashboard/groomer/calendar">
               <CardHeader>
                 <Calendar className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle>Calendario</CardTitle>
-                <CardDescription>Ver y gestionar tus citas</CardDescription>
+                <CardDescription>Gestionar disponibilidad y bloqueos</CardDescription>
               </CardHeader>
             </Link>
           </Card>

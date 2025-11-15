@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { PawPrint, User, LogOut, LayoutDashboard, Store } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { NotificationCenter } from '@/components/notifications/notification-center'
 
 export function Navbar() {
   const { user, profile, loading, signOut } = useAuth()
@@ -33,7 +34,7 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center space-x-2">
               <PawPrint className="h-6 w-6 text-primary" />
-              <span className="font-bold">Tail-Time</span>
+              <span className="font-bold">Paw-Society</span>
             </Link>
             <nav className="hidden md:flex items-center space-x-6 text-sm text-muted-foreground">
               <Link href="/marketplace" className="hover:text-primary transition-colors flex items-center gap-1">
@@ -59,13 +60,15 @@ export function Navbar() {
                 </Button>
               </>
             ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <User className="h-5 w-5" />
-                    <span className="sr-only">Menú de usuario</span>
-                  </Button>
-                </DropdownMenuTrigger>
+              <>
+                <NotificationCenter />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                      <User className="h-5 w-5" />
+                      <span className="sr-only">Menú de usuario</span>
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
@@ -97,6 +100,7 @@ export function Navbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             ) : null}
           </div>
         </div>

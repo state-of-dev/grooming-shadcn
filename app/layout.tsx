@@ -10,7 +10,7 @@ import { Toaster as SonnerToaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Grooming Platform - shadcn UI",
+  title: "Grooming Platform",
   description: "Plataforma de grooming con Next.js y shadcn/ui",
 };
 
