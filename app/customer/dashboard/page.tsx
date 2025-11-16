@@ -70,6 +70,7 @@ export default function CustomerDashboardPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [pets, setPets] = useState<Pet[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   // Modal states
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -105,13 +106,21 @@ export default function CustomerDashboardPage() {
 
   // Load appointments and pets
   useEffect(() => {
+    let mounted = true
+
     const loadData = async () => {
       if (!user || !profile || profile.role !== 'customer') {
         console.log('⏭️ Skipping data load - user not ready')
         return
       }
 
+      if (dataLoaded) {
+        console.log('⏭️ Data already loaded, skipping')
+        return
+      }
+
       console.log('📊 Loading customer data for user:', user.id)
+      if (!mounted) return
       setLoadingData(true)
 
       try {
@@ -197,13 +206,20 @@ export default function CustomerDashboardPage() {
       } catch (error) {
         console.error('❌ Error in loadData:', error)
       } finally {
-        setLoadingData(false)
+        if (mounted) {
+          setLoadingData(false)
+          setDataLoaded(true)
+        }
         console.log('✅ Data loading complete')
       }
     }
 
     loadData()
-  }, [user, profile])
+
+    return () => {
+      mounted = false
+    }
+  }, [user?.id, profile?.role, dataLoaded])
 
   const handleLogout = async () => {
     await signOut()

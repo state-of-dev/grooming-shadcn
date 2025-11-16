@@ -28,9 +28,9 @@ type Appointment = {
   start_time: string
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   total_amount: number
-  customer: { name: string; phone: string; email: string }[] | null
-  pet: { name: string; breed: string }[] | null
-  service: { name: string; duration: number }[] | null
+  customer: { name: string; phone: string; email: string } | null
+  pet: { name: string; breed: string } | null
+  service: { name: string; duration: number } | null
 }
 
 export default function GroomerDashboardPage() {
@@ -71,6 +71,10 @@ export default function GroomerDashboardPage() {
         variant: 'destructive',
       })
     } else {
+      console.log('🔍 Raw appointments data:', data)
+      if (data && data.length > 0) {
+        console.log('🔍 First appointment sample:', data[0])
+      }
       setAppointments(data || [])
     }
 
@@ -93,20 +97,8 @@ export default function GroomerDashboardPage() {
 
     if (profile && profile.role !== 'groomer') {
       router.replace('/customer/dashboard')
-      return
     }
-
-    // Redirect to setup if no business profile exists
-    if (profile && profile.role === 'groomer' && !businessProfile) {
-      router.replace('/setup/business')
-      return
-    }
-
-    // Redirect to setup if business profile exists but setup is not completed
-    if (businessProfile && !businessProfile.setup_completed) {
-      router.replace('/setup/business')
-    }
-  }, [user, profile, businessProfile, loading, router])
+  }, [user, profile, loading, router])
 
   const handleLogout = async () => {
     await signOut()
@@ -361,17 +353,17 @@ export default function GroomerDashboardPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium">{appointment.customer?.[0]?.name || 'N/A'}</div>
-                            <div className="text-sm text-muted-foreground">{appointment.customer?.[0]?.phone || ''}</div>
+                            <div className="font-medium">{appointment.customer?.name || 'N/A'}</div>
+                            <div className="text-sm text-muted-foreground">{appointment.customer?.phone || ''}</div>
                           </TableCell>
                           <TableCell>
-                            <div>{appointment.pet?.[0]?.name || 'N/A'}</div>
-                            <div className="text-sm text-muted-foreground">{appointment.pet?.[0]?.breed || ''}</div>
+                            <div>{appointment.pet?.name || 'N/A'}</div>
+                            <div className="text-sm text-muted-foreground">{appointment.pet?.breed || ''}</div>
                           </TableCell>
                           <TableCell>
-                            <div>{appointment.service?.[0]?.name || 'N/A'}</div>
+                            <div>{appointment.service?.name || 'N/A'}</div>
                             <div className="text-sm text-muted-foreground">
-                              {appointment.service?.[0]?.duration ? `${appointment.service[0].duration} min` : ''}
+                              {appointment.service?.duration ? `${appointment.service.duration} min` : ''}
                             </div>
                           </TableCell>
                           <TableCell>

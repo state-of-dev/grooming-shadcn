@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,7 +18,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Mail, Lock, User, Loader2, Briefcase, Heart, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Mail, Lock, User, Loader2, Briefcase, Heart, Eye, EyeOff, CheckCircle2, Building2, Phone, MapPin, FileText, DollarSign, Clock, PawPrint } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -30,7 +34,30 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'customer' as 'customer' | 'groomer'
+    role: 'customer' as 'customer' | 'groomer',
+    // Groomer fields
+    businessName: '',
+    address: '',
+    phone: '',
+    description: '',
+    serviceName: '',
+    servicePrice: '',
+    serviceDuration: '',
+    // Customer fields
+    petName: '',
+    petSpecies: 'dog' as 'dog' | 'cat',
+    petBreed: '',
+    petWeight: '',
+    customerPhone: ''
+  })
+  const [businessHours, setBusinessHours] = useState({
+    monday: { open: true, start: '09:00', end: '18:00' },
+    tuesday: { open: true, start: '09:00', end: '18:00' },
+    wednesday: { open: true, start: '09:00', end: '18:00' },
+    thursday: { open: true, start: '09:00', end: '18:00' },
+    friday: { open: true, start: '09:00', end: '18:00' },
+    saturday: { open: false, start: '09:00', end: '18:00' },
+    sunday: { open: false, start: '09:00', end: '18:00' }
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -44,9 +71,8 @@ export default function RegisterPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.fullName) {
-      newErrors.fullName = 'Nombre es requerido'
-    }
+
+    if (!formData.fullName) newErrors.fullName = 'Nombre es requerido'
     if (!formData.email) {
       newErrors.email = 'Email es requerido'
     } else if (!formData.email.includes('@')) {
@@ -60,38 +86,146 @@ export default function RegisterPage() {
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Las contraseñas no coinciden'
     }
+
+    if (formData.role === 'groomer') {
+      if (!formData.businessName) newErrors.businessName = 'Nombre del negocio es requerido'
+      if (!formData.phone) newErrors.phone = 'Teléfono es requerido'
+      if (!formData.address) newErrors.address = 'Dirección es requerida'
+      if (!formData.description) newErrors.description = 'Descripción es requerida'
+      if (!formData.serviceName) newErrors.serviceName = 'Nombre del servicio es requerido'
+      if (!formData.servicePrice || parseFloat(formData.servicePrice) <= 0) {
+        newErrors.servicePrice = 'Precio válido es requerido'
+      }
+      if (!formData.serviceDuration || parseInt(formData.serviceDuration) <= 0) {
+        newErrors.serviceDuration = 'Duración válida es requerida'
+      }
+
+      const hasOpenDay = Object.values(businessHours).some(h => h.open)
+      if (!hasOpenDay) {
+        newErrors.businessHours = 'Selecciona al menos un día abierto'
+      }
+    }
+
+    if (formData.role === 'customer') {
+      if (!formData.petName) newErrors.petName = 'Nombre de la mascota es requerido'
+      if (!formData.customerPhone) newErrors.customerPhone = 'Teléfono es requerido'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('🚀 Register form submitted')
-    if (!validateForm()) {
-      console.log('❌ Form validation failed')
-      return
-    }
+    if (!validateForm()) return
 
     setIsLoading(true)
     setErrors({})
 
-    console.log('📝 Signing up user with role:', formData.role)
-    const { error } = await signUp(
-      formData.email,
-      formData.password,
-      formData.fullName,
-      formData.role
-    )
+    try {
+      const { data: signUpData, error: signUpError } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        formData.role
+      )
 
-    if (error) {
-      console.log('❌ Signup error:', error.message)
-      setErrors({ submit: error.message })
-      setIsLoading(false)
-    } else {
-      console.log('✅ Signup successful!')
-      setIsLoading(false)
-      // Show success modal for email confirmation
+      if (signUpError) throw signUpError
+      if (!signUpData?.user) throw new Error('Usuario no encontrado después del registro')
+
+      const userId = signUpData.user.id
+
+      if (formData.role === 'groomer') {
+        const baseSlug = formData.businessName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        const slug = `${baseSlug}-${Date.now()}`
+
+        const { data: business, error: businessError } = await supabase
+          .from('business_profiles')
+          .insert({
+            owner_id: userId,
+            business_name: formData.businessName,
+            slug,
+            address: formData.address,
+            phone: formData.phone,
+            description: formData.description,
+            business_hours: businessHours,
+            setup_completed: true
+          })
+          .select()
+          .single()
+
+        if (businessError) throw businessError
+
+        const { error: serviceError } = await supabase
+          .from('services')
+          .insert({
+            business_id: business.id,
+            name: formData.serviceName,
+            price: parseFloat(formData.servicePrice),
+            duration: parseInt(formData.serviceDuration),
+            is_active: true
+          })
+
+        if (serviceError) throw serviceError
+
+        const { error: settingsError } = await supabase
+          .from('appointment_settings')
+          .insert({
+            business_id: business.id,
+            slot_duration_minutes: 30,
+            buffer_time_minutes: 0,
+            max_appointments_per_slot: 1,
+            min_booking_notice_hours: 2,
+            max_booking_advance_days: 30
+          })
+
+        if (settingsError && settingsError.code !== '23505') throw settingsError
+
+        const { error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: userId,
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone
+          })
+
+        if (customerError) throw customerError
+
+      } else {
+        const { data: customer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: userId,
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.customerPhone
+          })
+          .select()
+          .single()
+
+        if (customerError) throw customerError
+
+        const { error: petError } = await supabase
+          .from('pets')
+          .insert({
+            customer_id: customer.id,
+            name: formData.petName,
+            species: formData.petSpecies,
+            breed: formData.petBreed || null,
+            weight: formData.petWeight ? parseFloat(formData.petWeight) : null
+          })
+
+        if (petError) throw petError
+      }
+
       setShowSuccessModal(true)
+
+    } catch (error: any) {
+      console.error('Error en registro:', error)
+      setErrors({ submit: error.message || 'Error al crear cuenta' })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -232,6 +366,268 @@ export default function RegisterPage() {
               </div>
               {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
             </div>
+
+            {/* GROOMER FIELDS */}
+            {formData.role === 'groomer' && (
+              <>
+                <div className="pt-4 border-t">
+                  <h3 className="font-semibold mb-4">Datos del Negocio</h3>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessName">Nombre del negocio *</Label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="businessName"
+                          value={formData.businessName}
+                          onChange={(e) => setFormData(prev => ({ ...prev, businessName: e.target.value }))}
+                          className="pl-10"
+                          placeholder="Ej: Peluquería Canina Bella"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.businessName && <p className="text-sm text-destructive">{errors.businessName}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Teléfono *</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="phone"
+                          value={formData.phone}
+                          onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                          className="pl-10"
+                          placeholder="+52 55 1234 5678"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Dirección *</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="address"
+                          value={formData.address}
+                          onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                          className="pl-10"
+                          placeholder="Calle, colonia, ciudad"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descripción del negocio *</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe tu negocio en pocas palabras"
+                        disabled={isLoading}
+                        rows={3}
+                      />
+                      {errors.description && <p className="text-sm text-destructive">{errors.description}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h3 className="font-semibold mb-4">Primer Servicio</h3>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="serviceName">Nombre del servicio *</Label>
+                      <Input
+                        id="serviceName"
+                        value={formData.serviceName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, serviceName: e.target.value }))}
+                        placeholder="Ej: Baño completo"
+                        disabled={isLoading}
+                      />
+                      {errors.serviceName && <p className="text-sm text-destructive">{errors.serviceName}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="servicePrice">Precio *</Label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                          <Input
+                            id="servicePrice"
+                            type="number"
+                            value={formData.servicePrice}
+                            onChange={(e) => setFormData(prev => ({ ...prev, servicePrice: e.target.value }))}
+                            className="pl-10"
+                            placeholder="350"
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {errors.servicePrice && <p className="text-sm text-destructive">{errors.servicePrice}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="serviceDuration">Duración (min) *</Label>
+                        <div className="relative">
+                          <Clock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                          <Input
+                            id="serviceDuration"
+                            type="number"
+                            value={formData.serviceDuration}
+                            onChange={(e) => setFormData(prev => ({ ...prev, serviceDuration: e.target.value }))}
+                            className="pl-10"
+                            placeholder="60"
+                            disabled={isLoading}
+                          />
+                        </div>
+                        {errors.serviceDuration && <p className="text-sm text-destructive">{errors.serviceDuration}</p>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h3 className="font-semibold mb-4">Horarios</h3>
+                  {errors.businessHours && <p className="text-sm text-destructive mb-2">{errors.businessHours}</p>}
+                  <div className="space-y-3 text-sm">
+                    {Object.entries(businessHours).map(([day, hours]) => (
+                      <div key={day} className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 w-28">
+                          <Checkbox
+                            checked={hours.open}
+                            onCheckedChange={(checked) =>
+                              setBusinessHours(prev => ({
+                                ...prev,
+                                [day]: { ...prev[day as keyof typeof prev], open: checked as boolean }
+                              }))
+                            }
+                          />
+                          <Label className="capitalize text-sm">{day}</Label>
+                        </div>
+                        {hours.open && (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              type="time"
+                              value={hours.start}
+                              onChange={(e) =>
+                                setBusinessHours(prev => ({
+                                  ...prev,
+                                  [day]: { ...prev[day as keyof typeof prev], start: e.target.value }
+                                }))
+                              }
+                              className="h-8 text-sm"
+                            />
+                            <span className="text-muted-foreground">a</span>
+                            <Input
+                              type="time"
+                              value={hours.end}
+                              onChange={(e) =>
+                                setBusinessHours(prev => ({
+                                  ...prev,
+                                  [day]: { ...prev[day as keyof typeof prev], end: e.target.value }
+                                }))
+                              }
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* CUSTOMER FIELDS */}
+            {formData.role === 'customer' && (
+              <div className="pt-4 border-t">
+                <h3 className="font-semibold mb-4">Información de Contacto</h3>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customerPhone">Teléfono *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="customerPhone"
+                        value={formData.customerPhone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customerPhone: e.target.value }))}
+                        className="pl-10"
+                        placeholder="+52 55 1234 5678"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {errors.customerPhone && <p className="text-sm text-destructive">{errors.customerPhone}</p>}
+                  </div>
+                </div>
+
+                <h3 className="font-semibold mb-4 mt-6">Tu Primera Mascota</h3>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="petName">Nombre de la mascota *</Label>
+                    <div className="relative">
+                      <PawPrint className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="petName"
+                        value={formData.petName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, petName: e.target.value }))}
+                        className="pl-10"
+                        placeholder="Ej: Max"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {errors.petName && <p className="text-sm text-destructive">{errors.petName}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="petSpecies">Especie *</Label>
+                    <Select
+                      value={formData.petSpecies}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, petSpecies: value as 'dog' | 'cat' }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dog">Perro</SelectItem>
+                        <SelectItem value="cat">Gato</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="petBreed">Raza (opcional)</Label>
+                      <Input
+                        id="petBreed"
+                        value={formData.petBreed}
+                        onChange={(e) => setFormData(prev => ({ ...prev, petBreed: e.target.value }))}
+                        placeholder="Ej: Labrador"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="petWeight">Peso kg (opcional)</Label>
+                      <Input
+                        id="petWeight"
+                        type="number"
+                        value={formData.petWeight}
+                        onChange={(e) => setFormData(prev => ({ ...prev, petWeight: e.target.value }))}
+                        placeholder="15"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {errors.submit && (
               <div className="p-3 rounded-md bg-destructive/10 border border-destructive">

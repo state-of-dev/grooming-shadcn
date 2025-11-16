@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
     console.log('🔐 SignUp result:', { userId: data?.user?.id, error: error?.message })
-    return { error }
+    return { data, error }
   }
 
   const signOut = async () => {
