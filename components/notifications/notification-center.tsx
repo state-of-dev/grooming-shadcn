@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Bell,
@@ -75,7 +75,7 @@ export function NotificationCenter() {
 
   const getNotificationIcon = (type: string) => {
     const iconClass = "h-5 w-5";
-    const iconMap: Record<string, { icon: JSX.Element; color: string }> = {
+    const iconMap: Record<string, { icon: React.ReactElement; color: string }> = {
       appointment_created: {
         icon: <Calendar className={iconClass} />,
         color: 'text-blue-500'

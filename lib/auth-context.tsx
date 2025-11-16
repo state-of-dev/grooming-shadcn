@@ -27,7 +27,12 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error?: AuthError | null }>
-  signUp: (email: string, password: string, fullName: string, role?: 'customer' | 'groomer') => Promise<{ error?: AuthError | null }>
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    role?: 'customer' | 'groomer'
+  ) => Promise<{ data?: any; error?: AuthError | null }>
   signOut: () => Promise<{ error?: AuthError | null }>
   refreshBusinessProfile: () => Promise<void>
 }

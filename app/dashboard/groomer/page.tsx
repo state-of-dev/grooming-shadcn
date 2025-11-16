@@ -75,7 +75,13 @@ export default function GroomerDashboardPage() {
       if (data && data.length > 0) {
         console.log('🔍 First appointment sample:', data[0])
       }
-      setAppointments(data || [])
+      const normalizedAppointments: Appointment[] = (data || []).map((apt: any) => ({
+        ...apt,
+        customer: Array.isArray(apt.customer) ? (apt.customer[0] ?? null) : (apt.customer ?? null),
+        pet: Array.isArray(apt.pet) ? (apt.pet[0] ?? null) : (apt.pet ?? null),
+        service: Array.isArray(apt.service) ? (apt.service[0] ?? null) : (apt.service ?? null),
+      }))
+      setAppointments(normalizedAppointments)
     }
 
     setLoadingAppointments(false)
