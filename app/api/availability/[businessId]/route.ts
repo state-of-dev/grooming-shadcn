@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RouteContext } from "next";
 import { createClient } from '@supabase/supabase-js';
 import { addDays, parseISO, startOfDay } from 'date-fns';
 import { calculateAvailability, BusinessHours } from '@/lib/availability';
 
-// Función para transformar business_hours al formato esperado
 function transformBusinessHours(businessHours: any): Record<string, BusinessHours> {
   if (!businessHours || typeof businessHours !== 'object') {
     return {};
@@ -14,15 +14,12 @@ function transformBusinessHours(businessHours: any): Record<string, BusinessHour
   for (const [day, hours] of Object.entries(businessHours)) {
     const h = hours as any;
 
-    // Si open es false o no hay start/end, el día está cerrado
     const isClosed = h.open === false || !h.start || !h.end;
 
-    // Transformar formato { open: boolean, start: string, end: string }
-    // a formato { open: string, close: string, closed: boolean }
     result[day] = {
-      open: h.start || null,           // "start" -> "open"
-      close: h.end || null,             // "end" -> "close"
-      closed: isClosed                  // determinar si está cerrado
+      open: h.start || null,
+      close: h.end || null,
+      closed: isClosed
     };
   }
 
@@ -31,17 +28,16 @@ function transformBusinessHours(businessHours: any): Record<string, BusinessHour
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { businessId: string } }
+  context: RouteContext<{ businessId: string }>
 ) {
   try {
-    const { businessId } = params;
+    const { businessId } = context.params;
     const searchParams = request.nextUrl.searchParams;
 
     const startDateStr = searchParams.get('start_date');
     const endDateStr = searchParams.get('end_date');
     const serviceDurationStr = searchParams.get('service_duration');
 
-    // Validar parámetros requeridos
     if (!startDateStr || !serviceDurationStr) {
       return NextResponse.json(
         { error: 'Missing required parameters: start_date, service_duration' },
@@ -53,14 +49,13 @@ export async function GET(
     const startDate = startOfDay(parseISO(startDateStr));
     const endDate = endDateStr
       ? startOfDay(parseISO(endDateStr))
-      : addDays(startDate, 30); // Por defecto, 30 días
+      : addDays(startDate, 30);
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // 1. Obtener horarios del negocio
     const { data: business, error: businessError } = await supabase
       .from('business_profiles')
       .select('business_hours')
@@ -74,7 +69,6 @@ export async function GET(
       );
     }
 
-    // 2. Obtener configuración de citas
     const { data: settings, error: settingsError } = await supabase
       .from('appointment_settings')
       .select('*')
@@ -88,7 +82,6 @@ export async function GET(
       );
     }
 
-    // 3. Obtener excepciones (bloqueos, vacaciones)
     const { data: exceptions, error: exceptionsError } = await supabase
       .from('availability_exceptions')
       .select('*')
@@ -99,7 +92,6 @@ export async function GET(
       console.error('Error fetching exceptions:', exceptionsError);
     }
 
-    // 4. Obtener citas existentes en el rango de fechas
     const { data: appointments, error: appointmentsError } = await supabase
       .from('appointments')
       .select('appointment_date, start_time, end_time, status')
@@ -112,7 +104,6 @@ export async function GET(
       console.error('Error fetching appointments:', appointmentsError);
     }
 
-    // 5. Calcular disponibilidad
     const transformedHours = transformBusinessHours(business.business_hours);
 
     const availability = calculateAvailability(
@@ -141,19 +132,8 @@ export async function GET(
 
   } catch (error) {
     console.error('Error calculating availability:', error);
-    console.error('Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      businessId,
-      startDate: startDateStr,
-      endDate: endDateStr,
-      serviceDuration: serviceDurationStr
-    });
     return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
