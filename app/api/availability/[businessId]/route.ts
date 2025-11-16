@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { RouteContext } from "next";
 import { createClient } from '@supabase/supabase-js';
 import { addDays, parseISO, startOfDay } from 'date-fns';
 import { calculateAvailability, BusinessHours } from '@/lib/availability';
 
+// Función para transformar business_hours al formato esperado
 function transformBusinessHours(businessHours: any): Record<string, BusinessHours> {
   if (!businessHours || typeof businessHours !== 'object') {
     return {};
@@ -28,10 +28,12 @@ function transformBusinessHours(businessHours: any): Record<string, BusinessHour
 
 export async function GET(
   request: NextRequest,
-  context: RouteContext<{ businessId: string }>
+  context: { params: Promise<{ businessId: string }> }
 ) {
   try {
-    const { businessId } = context.params;
+    // 👇 Nuevo: Next.js 15 ahora trata params como Promise
+    const { businessId } = await context.params;
+
     const searchParams = request.nextUrl.searchParams;
 
     const startDateStr = searchParams.get('start_date');
@@ -56,6 +58,7 @@ export async function GET(
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    // 1. Horarios del negocio
     const { data: business, error: businessError } = await supabase
       .from('business_profiles')
       .select('business_hours')
@@ -69,6 +72,7 @@ export async function GET(
       );
     }
 
+    // 2. Configuración de citas
     const { data: settings, error: settingsError } = await supabase
       .from('appointment_settings')
       .select('*')
@@ -82,6 +86,7 @@ export async function GET(
       );
     }
 
+    // 3. Excepciones
     const { data: exceptions, error: exceptionsError } = await supabase
       .from('availability_exceptions')
       .select('*')
@@ -92,6 +97,7 @@ export async function GET(
       console.error('Error fetching exceptions:', exceptionsError);
     }
 
+    // 4. Citas existentes
     const { data: appointments, error: appointmentsError } = await supabase
       .from('appointments')
       .select('appointment_date, start_time, end_time, status')
@@ -104,6 +110,7 @@ export async function GET(
       console.error('Error fetching appointments:', appointmentsError);
     }
 
+    // 5. Calcular disponibilidad
     const transformedHours = transformBusinessHours(business.business_hours);
 
     const availability = calculateAvailability(
