@@ -51,14 +51,15 @@ export default function RegisterPage() {
     customerPhone: ''
   })
   const [businessHours, setBusinessHours] = useState({
-    monday: { open: true, start: '09:00', end: '18:00' },
-    tuesday: { open: true, start: '09:00', end: '18:00' },
-    wednesday: { open: true, start: '09:00', end: '18:00' },
-    thursday: { open: true, start: '09:00', end: '18:00' },
-    friday: { open: true, start: '09:00', end: '18:00' },
-    saturday: { open: false, start: '09:00', end: '18:00' },
-    sunday: { open: false, start: '09:00', end: '18:00' }
+    lunes: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+    martes: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+    miércoles: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+    jueves: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+    viernes: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+    sábado: { open: false, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+    domingo: { open: false, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' }
   })
+  const [globalLunchBreak, setGlobalLunchBreak] = useState({ start: '14:00', end: '15:00' })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
@@ -494,45 +495,125 @@ export default function RegisterPage() {
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-4">Horarios</h3>
                   {errors.businessHours && <p className="text-sm text-destructive mb-2">{errors.businessHours}</p>}
+
+                  {/* Global Lunch Break */}
+                  <div className="mb-4 p-3 bg-muted/50 rounded-lg space-y-3">
+                    <Label className="font-medium">Horario de comida general</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={globalLunchBreak.start}
+                        onChange={(e) =>
+                          setGlobalLunchBreak(prev => ({ ...prev, start: e.target.value }))
+                        }
+                        className="h-8 text-sm w-24"
+                      />
+                      <span className="text-muted-foreground text-sm">a</span>
+                      <Input
+                        type="time"
+                        value={globalLunchBreak.end}
+                        onChange={(e) =>
+                          setGlobalLunchBreak(prev => ({ ...prev, end: e.target.value }))
+                        }
+                        className="h-8 text-sm w-24"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setBusinessHours(prev => {
+                            const updated = { ...prev }
+                            Object.keys(updated).forEach(day => {
+                              if (updated[day as keyof typeof updated].open) {
+                                updated[day as keyof typeof updated] = {
+                                  ...updated[day as keyof typeof updated],
+                                  lunchStart: globalLunchBreak.start,
+                                  lunchEnd: globalLunchBreak.end
+                                }
+                              }
+                            })
+                            return updated
+                          })
+                        }}
+                        className="ml-2"
+                      >
+                        Aplicar a todos
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="space-y-3 text-sm">
                     {Object.entries(businessHours).map(([day, hours]) => (
-                      <div key={day} className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 w-28">
-                          <Checkbox
-                            checked={hours.open}
-                            onCheckedChange={(checked) =>
-                              setBusinessHours(prev => ({
-                                ...prev,
-                                [day]: { ...prev[day as keyof typeof prev], open: checked as boolean }
-                              }))
-                            }
-                          />
-                          <Label className="capitalize text-sm">{day}</Label>
+                      <div key={day} className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 w-28">
+                            <Checkbox
+                              checked={hours.open}
+                              onCheckedChange={(checked) =>
+                                setBusinessHours(prev => ({
+                                  ...prev,
+                                  [day]: { ...prev[day as keyof typeof prev], open: checked as boolean }
+                                }))
+                              }
+                            />
+                            <Label className="capitalize text-sm">{day}</Label>
+                          </div>
+                          {hours.open && (
+                            <div className="flex items-center gap-2 flex-1">
+                              <Input
+                                type="time"
+                                value={hours.start}
+                                onChange={(e) =>
+                                  setBusinessHours(prev => ({
+                                    ...prev,
+                                    [day]: { ...prev[day as keyof typeof prev], start: e.target.value }
+                                  }))
+                                }
+                                className="h-8 text-sm"
+                              />
+                              <span className="text-muted-foreground">a</span>
+                              <Input
+                                type="time"
+                                value={hours.end}
+                                onChange={(e) =>
+                                  setBusinessHours(prev => ({
+                                    ...prev,
+                                    [day]: { ...prev[day as keyof typeof prev], end: e.target.value }
+                                  }))
+                                }
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                          )}
                         </div>
                         {hours.open && (
-                          <div className="flex items-center gap-2 flex-1">
+                          <div className="flex items-center gap-2 ml-28 pl-2">
+                            <Label className="text-xs text-muted-foreground w-20">Comida:</Label>
                             <Input
                               type="time"
-                              value={hours.start}
+                              value={hours.lunchStart || ''}
                               onChange={(e) =>
                                 setBusinessHours(prev => ({
                                   ...prev,
-                                  [day]: { ...prev[day as keyof typeof prev], start: e.target.value }
+                                  [day]: { ...prev[day as keyof typeof prev], lunchStart: e.target.value }
                                 }))
                               }
-                              className="h-8 text-sm"
+                              className="h-7 text-xs w-20"
+                              placeholder="--:--"
                             />
-                            <span className="text-muted-foreground">a</span>
+                            <span className="text-muted-foreground text-xs">a</span>
                             <Input
                               type="time"
-                              value={hours.end}
+                              value={hours.lunchEnd || ''}
                               onChange={(e) =>
                                 setBusinessHours(prev => ({
                                   ...prev,
-                                  [day]: { ...prev[day as keyof typeof prev], end: e.target.value }
+                                  [day]: { ...prev[day as keyof typeof prev], lunchEnd: e.target.value }
                                 }))
                               }
-                              className="h-8 text-sm"
+                              className="h-7 text-xs w-20"
+                              placeholder="--:--"
                             />
                           </div>
                         )}

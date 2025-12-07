@@ -13,13 +13,19 @@ import {
   Clock,
   ArrowRight,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Plus,
+  Trash2,
+  XCircle
 } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface DayHours {
   open: boolean
   start: string
   end: string
+  lunchStart?: string
+  lunchEnd?: string
 }
 
 interface BusinessHours {
@@ -43,13 +49,13 @@ const DAYS = [
 ] as const
 
 const DEFAULT_HOURS: BusinessHours = {
-  monday: { open: true, start: '09:00', end: '18:00' },
-  tuesday: { open: true, start: '09:00', end: '18:00' },
-  wednesday: { open: true, start: '09:00', end: '18:00' },
-  thursday: { open: true, start: '09:00', end: '18:00' },
-  friday: { open: true, start: '09:00', end: '19:00' },
-  saturday: { open: true, start: '08:00', end: '16:00' },
-  sunday: { open: false, start: '09:00', end: '17:00' }
+  monday: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+  tuesday: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+  wednesday: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+  thursday: { open: true, start: '09:00', end: '18:00', lunchStart: '', lunchEnd: '' },
+  friday: { open: true, start: '09:00', end: '19:00', lunchStart: '', lunchEnd: '' },
+  saturday: { open: true, start: '08:00', end: '16:00', lunchStart: '', lunchEnd: '' },
+  sunday: { open: false, start: '09:00', end: '17:00', lunchStart: '', lunchEnd: '' }
 }
 
 export default function BusinessHoursSetup() {
@@ -60,6 +66,27 @@ export default function BusinessHoursSetup() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [businessHours, setBusinessHours] = useState<BusinessHours>(DEFAULT_HOURS)
   const [businessName, setBusinessName] = useState('')
+  const [globalLunchBreak, setGlobalLunchBreak] = useState({ enabled: false, start: '14:00', end: '15:00' })
+  const [blockedTimes, setBlockedTimes] = useState<Array<{ day?: string, start: string, end: string, recurring: boolean }>>([])
+
+  // Apply global lunch break to all open days
+  useEffect(() => {
+    if (globalLunchBreak.enabled) {
+      setBusinessHours(prev => {
+        const updated = { ...prev }
+        Object.keys(updated).forEach(day => {
+          if (updated[day as keyof typeof updated].open) {
+            updated[day as keyof typeof updated] = {
+              ...updated[day as keyof typeof updated],
+              lunchStart: globalLunchBreak.start,
+              lunchEnd: globalLunchBreak.end
+            }
+          }
+        })
+        return updated
+      })
+    }
+  }, [globalLunchBreak.enabled, globalLunchBreak.start, globalLunchBreak.end])
 
   // Redirect if not logged in or not a groomer
   useEffect(() => {
@@ -177,7 +204,10 @@ export default function BusinessHoursSetup() {
     try {
       const { error: updateError } = await supabase
         .from('business_profiles')
-        .update({ business_hours: businessHours })
+        .update({
+          business_hours: businessHours,
+          blocked_times: blockedTimes.length > 0 ? blockedTimes : null
+        })
         .eq('owner_id', user.id)
 
       if (updateError) {
@@ -255,6 +285,56 @@ export default function BusinessHoursSetup() {
                 </Button>
               </div>
 
+              {/* Global Lunch Break */}
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Horario de Comida General</Label>
+                      <Button
+                        type="button"
+                        variant={globalLunchBreak.enabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setGlobalLunchBreak(prev => ({ ...prev, enabled: !prev.enabled }))}
+                        disabled={isLoading}
+                        className={globalLunchBreak.enabled ? "bg-green-600 hover:bg-green-700" : ""}
+                      >
+                        {globalLunchBreak.enabled ? 'Habilitado' : 'Deshabilitado'}
+                      </Button>
+                    </div>
+                    {globalLunchBreak.enabled && (
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div>
+                          <Label className="text-sm text-muted-foreground">Inicio de Comida</Label>
+                          <Input
+                            type="time"
+                            value={globalLunchBreak.start}
+                            onChange={(e) => setGlobalLunchBreak(prev => ({ ...prev, start: e.target.value }))}
+                            className="mt-1"
+                            disabled={isLoading}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-sm text-muted-foreground">Fin de Comida</Label>
+                          <Input
+                            type="time"
+                            value={globalLunchBreak.end}
+                            onChange={(e) => setGlobalLunchBreak(prev => ({ ...prev, end: e.target.value }))}
+                            className="mt-1"
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {globalLunchBreak.enabled && (
+                      <p className="text-xs text-muted-foreground">
+                        Este horario se aplicará automáticamente a todos los días abiertos. Puedes editarlo individualmente por día después.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Days Configuration */}
               <div className="space-y-4">
                 {DAYS.map(({ key, label }) => {
@@ -279,33 +359,67 @@ export default function BusinessHoursSetup() {
                         </div>
 
                         {dayHours.open && (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor={`${key}-start`} className="text-sm text-muted-foreground">
-                                Hora de Apertura
-                              </Label>
-                              <Input
-                                id={`${key}-start`}
-                                type="time"
-                                value={dayHours.start}
-                                onChange={(e) => updateDayHours(key, 'start', e.target.value)}
-                                className="mt-1"
-                                disabled={isLoading}
-                              />
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor={`${key}-start`} className="text-sm text-muted-foreground">
+                                  Hora de Apertura
+                                </Label>
+                                <Input
+                                  id={`${key}-start`}
+                                  type="time"
+                                  value={dayHours.start}
+                                  onChange={(e) => updateDayHours(key, 'start', e.target.value)}
+                                  className="mt-1"
+                                  disabled={isLoading}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`${key}-end`} className="text-sm text-muted-foreground">
+                                  Hora de Cierre
+                                </Label>
+                                <Input
+                                  id={`${key}-end`}
+                                  type="time"
+                                  value={dayHours.end}
+                                  onChange={(e) => updateDayHours(key, 'end', e.target.value)}
+                                  className="mt-1"
+                                  disabled={isLoading}
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <Label htmlFor={`${key}-end`} className="text-sm text-muted-foreground">
-                                Hora de Cierre
-                              </Label>
-                              <Input
-                                id={`${key}-end`}
-                                type="time"
-                                value={dayHours.end}
-                                onChange={(e) => updateDayHours(key, 'end', e.target.value)}
-                                className="mt-1"
-                                disabled={isLoading}
-                              />
-                            </div>
+                            {!globalLunchBreak.enabled && (
+                              <div className="grid grid-cols-2 gap-4 pl-4 border-l-2 border-muted">
+                                <div>
+                                  <Label htmlFor={`${key}-lunch-start`} className="text-xs text-muted-foreground">
+                                    Comida - Inicio (opcional)
+                                  </Label>
+                                  <Input
+                                    id={`${key}-lunch-start`}
+                                    type="time"
+                                    value={dayHours.lunchStart || ''}
+                                    onChange={(e) => updateDayHours(key, 'lunchStart', e.target.value)}
+                                    className="mt-1 h-8 text-sm"
+                                    disabled={isLoading}
+                                    placeholder="--:--"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${key}-lunch-end`} className="text-xs text-muted-foreground">
+                                    Comida - Fin (opcional)
+                                  </Label>
+                                  <Input
+                                    id={`${key}-lunch-end`}
+                                    type="time"
+                                    value={dayHours.lunchEnd || ''}
+                                    onChange={(e) => updateDayHours(key, 'lunchEnd', e.target.value)}
+                                    className="mt-1 h-8 text-sm"
+                                    disabled={isLoading}
+                                    placeholder="--:--"
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -317,6 +431,124 @@ export default function BusinessHoursSetup() {
                   )
                 })}
               </div>
+
+              {/* Blocked Times Section */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">Horarios Bloqueados</CardTitle>
+                      <CardDescription>Bloquea horarios específicos donde no recibirás citas</CardDescription>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setBlockedTimes(prev => [...prev, { start: '12:00', end: '13:00', recurring: false }])}
+                      disabled={isLoading}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Bloqueo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {blockedTimes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No hay horarios bloqueados. Agrega uno para comenzar.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {blockedTimes.map((blocked, index) => (
+                        <Card key={index} className="bg-muted/30">
+                          <CardContent className="pt-4 space-y-3">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 space-y-3">
+                                {/* Day Selector */}
+                                <div className="flex items-center gap-2">
+                                  <Checkbox
+                                    checked={!blocked.recurring}
+                                    onCheckedChange={(checked) => {
+                                      const updated = [...blockedTimes]
+                                      updated[index].recurring = !checked
+                                      if (checked) updated[index].day = 'monday'
+                                      else delete updated[index].day
+                                      setBlockedTimes(updated)
+                                    }}
+                                  />
+                                  <Label className="text-sm">Día específico</Label>
+                                  {!blocked.recurring && (
+                                    <select
+                                      value={blocked.day || 'monday'}
+                                      onChange={(e) => {
+                                        const updated = [...blockedTimes]
+                                        updated[index].day = e.target.value
+                                        setBlockedTimes(updated)
+                                      }}
+                                      className="ml-2 h-8 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                    >
+                                      {DAYS.map(({ key, label }) => (
+                                        <option key={key} value={key}>{label}</option>
+                                      ))}
+                                    </select>
+                                  )}
+                                  {blocked.recurring && (
+                                    <span className="ml-2 text-xs text-muted-foreground">(Todos los días)</span>
+                                  )}
+                                </div>
+
+                                {/* Time Range */}
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <Label className="text-xs text-muted-foreground">Hora de Inicio</Label>
+                                    <Input
+                                      type="time"
+                                      value={blocked.start}
+                                      onChange={(e) => {
+                                        const updated = [...blockedTimes]
+                                        updated[index].start = e.target.value
+                                        setBlockedTimes(updated)
+                                      }}
+                                      className="mt-1 h-8 text-sm"
+                                      disabled={isLoading}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs text-muted-foreground">Hora de Fin</Label>
+                                    <Input
+                                      type="time"
+                                      value={blocked.end}
+                                      onChange={(e) => {
+                                        const updated = [...blockedTimes]
+                                        updated[index].end = e.target.value
+                                        setBlockedTimes(updated)
+                                      }}
+                                      className="mt-1 h-8 text-sm"
+                                      disabled={isLoading}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Delete Button */}
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setBlockedTimes(prev => prev.filter((_, i) => i !== index))}
+                                disabled={isLoading}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {errors.general && (
                 <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">

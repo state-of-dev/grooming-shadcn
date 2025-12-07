@@ -131,10 +131,10 @@ export default function MarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Encuentra tu Groomer Perfecto
+              Encuentra una estética canina o veterinaria
             </h1>
             <p className="text-xl text-muted-foreground mb-8">
-              Profesionales verificados, cuidado de calidad para tu mascota
+              Profesionales verificados
             </p>
           </div>
         </div>
@@ -217,22 +217,14 @@ export default function MarketplacePage() {
                       onClick={() => handleBusinessClick(business.slug)}
                     >
                       <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-xl line-clamp-1">
-                              {business.business_name}
-                            </CardTitle>
-                            <div className="flex items-center gap-2 mt-2">
-                              <MapPin className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">
-                                {business.city || 'Sin ubicación'}, {business.state || ''}
-                              </span>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">
-                            <Scissors className="w-3 h-3 mr-1" />
-                            Activo
-                          </Badge>
+                        <CardTitle className="text-lg line-clamp-2">
+                          {business.business_name}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {business.city || 'Sin ubicación'}, {business.state || ''}
+                          </span>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -244,7 +236,7 @@ export default function MarketplacePage() {
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="outline">Baño</Badge>
                           <Badge variant="outline">Corte</Badge>
-                          <Badge variant="outline">Spa</Badge>
+                          <Badge variant="outline">Veterinaria</Badge>
                         </div>
 
                         {/* Rating and contact */}

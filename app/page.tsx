@@ -9,19 +9,19 @@ export default function Home() {
       <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/50">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-            Plataforma para Groomers
+            Estéticas Caninas y Veterinarias
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Gestiona citas, pagos y clientes en un solo lugar con tecnología moderna
+            Plataforma para gestionar citas, pagos y clientes 24/7
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="text-lg px-8">
-              Comenzar ahora
-              <ArrowRight className="ml-2 h-5 w-5" />
+              Registra tu negocio ¡Gratis!
+              {/* <ArrowRight className="ml-2 h-5 w-5" /> */}
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8">
+            {/* <Button size="lg" variant="outline" className="text-lg px-8">
               Ver demo
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>
@@ -34,7 +34,7 @@ export default function Home() {
               Todo lo que necesitas
             </h2>
             <p className="text-xl text-muted-foreground">
-              Herramientas profesionales para tu negocio de grooming
+              Herramientas profesionales para gestión administrativa
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export default function Home() {
                 </div>
                 <CardTitle className="text-2xl">Reservas Online</CardTitle>
                 <CardDescription className="text-base">
-                  Tus clientes pueden reservar citas 24/7 sin llamadas
+                  Tus clientes pueden reservar servicios 24/7
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -58,7 +58,7 @@ export default function Home() {
                 </div>
                 <CardTitle className="text-2xl">Pagos Automáticos</CardTitle>
                 <CardDescription className="text-base">
-                  Cobra automáticamente con tarjeta o transferencia
+                  Multiples métodos de cobro integrados.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -70,7 +70,7 @@ export default function Home() {
                 </div>
                 <CardTitle className="text-2xl">Tu Página Web</CardTitle>
                 <CardDescription className="text-base">
-                  Página profesional lista en minutos
+                  Página gratuita con botones para reservar.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -79,7 +79,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4">
+      {/* <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-4">Amado por profesionales</h2>
@@ -124,70 +124,54 @@ export default function Home() {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-4">Planes para cada negocio</h2>
-            <p className="text-xl text-muted-foreground">Elige el plan que mejor se adapte a tu tamaño y necesidades.</p>
+            <p className="text-xl text-muted-foreground">Elige el plan que mejor se adapte a tus necesidades.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <Card className="flex flex-col">
               <CardHeader>
-                <CardTitle className="text-2xl">Básico</CardTitle>
-                <CardDescription>Ideal para empezar y negocios pequeños.</CardDescription>
+                <CardTitle className="text-2xl">Free</CardTitle>
+                <CardDescription>Perfecto para comenzar tu negocio.</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow space-y-4">
-                <div className="text-4xl font-bold">$25<span className="text-xl font-normal text-muted-foreground">/mes</span></div>
+                <div className="text-4xl font-bold">Gratis</div>
                 <ul className="space-y-2">
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Hasta 50 citas/mes</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />1 Página de negocio</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte por email</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Acepta todos los tipos de pago</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Hasta 20 citas al mes</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Dirección web personalizada</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte por e-mail</li>
                 </ul>
               </CardContent>
               <div className="p-6 pt-0">
-                <Button className="w-full">Empezar Plan Básico</Button>
+                <Button variant="outline" className="w-full">Comenzar Gratis</Button>
               </div>
             </Card>
             <Card className="flex flex-col border-2 border-primary shadow-lg">
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-2xl">Profesional</CardTitle>
-                  <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">MÁS POPULAR</div>
+                  <CardTitle className="text-2xl">Pro</CardTitle>
+                  <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">RECOMENDADO</div>
                 </div>
-                <CardDescription>Perfecto para negocios en crecimiento.</CardDescription>
+                <CardDescription>Todo lo que del plan Free y además:</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow space-y-4">
-                <div className="text-4xl font-bold">$59<span className="text-xl font-normal text-muted-foreground">/mes</span></div>
+                <div className="text-4xl font-bold">$79<span className="text-xl font-normal text-muted-foreground">/mes</span></div>
                 <ul className="space-y-2">
+                  {/* <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Todo lo anterior y además:</li> */}
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Comisión reducida</li>
                   <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Citas ilimitadas</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Página web personalizable</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Acepta pagos con tarjeta</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte prioritario</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Publicado en marketplace</li>
+                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte telefónico</li>
                 </ul>
               </CardContent>
               <div className="p-6 pt-0">
                 <Button className="w-full">Empezar Plan Pro</Button>
-              </div>
-            </Card>
-            <Card className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-2xl">Empresarial</CardTitle>
-                <CardDescription>Soluciones a medida para grandes volúmenes.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow space-y-4">
-                <div className="text-4xl font-bold">Contacto</div>
-                <ul className="space-y-2">
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Todo lo de Profesional</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Múltiples sucursales</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Roles y permisos de equipo</li>
-                  <li className="flex items-center"><Check className="h-5 w-5 text-green-500 mr-2" />Soporte dedicado</li>
-                </ul>
-              </CardContent>
-              <div className="p-6 pt-0">
-                <Button variant="outline" className="w-full">Contactar Ventas</Button>
               </div>
             </Card>
           </div>
@@ -195,7 +179,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-muted/50">
+      {/* <section className="py-20 px-4 bg-muted/50">
         <div className="max-w-4xl mx-auto text-center">
           <Card className="border-2">
             <CardContent className="pt-12 pb-12">
@@ -212,7 +196,7 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </section> */}
     </main>
   )
 }
