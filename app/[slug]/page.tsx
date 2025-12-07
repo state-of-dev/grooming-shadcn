@@ -132,7 +132,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const rating = await getBusinessRating(business.id)
 
   return {
-    title: `${business.business_name} - Grooming Profesional`,
+    title: `${business.business_name} - Perrify`,
     description: business.description || `Servicios de grooming profesional en ${business.business_name}. Agenda tu cita ahora.`,
     openGraph: {
       title: business.business_name,

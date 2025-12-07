@@ -257,7 +257,7 @@ export default function BusinessSetupPage() {
                   placeholder="tu-negocio"
                 />
                 <span className="text-sm text-muted-foreground px-3 py-2 bg-muted border border-l-0 rounded-r-md">
-                  .grooming.com
+                  .perrify.com
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -484,7 +484,7 @@ export default function BusinessSetupPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">URL:</span>
                   <span className="font-medium text-foreground">
-                    https://{formData.slug}.grooming.com
+                    https://{formData.slug}.perrify.com
                   </span>
                 </div>
                 <div className="flex justify-between">
