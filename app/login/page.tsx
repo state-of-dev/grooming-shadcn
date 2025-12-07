@@ -17,8 +17,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
-    email: 'groomer1@demo.com',
-    password: 'demo123',
+    email: '',
+    password: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -172,19 +172,6 @@ export default function LoginPage() {
             <Button asChild variant="outline" className="w-full">
               <Link href="/register">Crear cuenta gratis</Link>
             </Button>
-            <div className="mt-6 p-4 rounded-md bg-muted border">
-              <p className="text-sm font-medium mb-3 text-center">Credenciales de prueba</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Groomer:</span>
-                  <code className="bg-background px-2 py-1 rounded">groomer@demo.com / demo123</code>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Cliente:</span>
-                  <code className="bg-background px-2 py-1 rounded">customer@demo.com / demo123</code>
-                </div>
-              </div>
-            </div>
           </form>
         </CardContent>
       </Card>

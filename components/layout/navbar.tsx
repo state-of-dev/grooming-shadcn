@@ -34,7 +34,7 @@ export function Navbar() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center space-x-2">
               <PawPrint className="h-6 w-6 text-primary" />
-              <span className="font-bold">Paw-Society</span>
+              <span className="font-bold">Perrify</span>
             </Link>
             <nav className="hidden md:flex items-center space-x-6 text-sm text-muted-foreground">
               <Link href="/marketplace" className="hover:text-primary transition-colors flex items-center gap-1">

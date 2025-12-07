@@ -102,6 +102,11 @@ async function getBusinessRating(businessId: string) {
     .eq('business_id', businessId)
     .single()
 
+  // Si no existe rating aún, retorna null sin error
+  if (error && error.code === 'PGRST116') {
+    return null
+  }
+
   if (error) {
     console.error('Error loading rating:', error)
     return null

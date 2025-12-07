@@ -110,7 +110,7 @@ export default function MarketplacePage() {
   }
 
   const handleBusinessClick = (slug: string) => {
-    router.push(`/business/${slug}/book`)
+    router.push(`/${slug}`)
   }
 
   if (isLoading) {
