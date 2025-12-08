@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ordersController } from '@/lib/paypal'
-import { OrderRequest } from '@paypal/paypal-server-sdk'
+import { OrderRequest, CheckoutPaymentIntent } from '@paypal/paypal-server-sdk'
 
 export const runtime = 'nodejs'
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // Create order request for Pro subscription
     const orderRequest: OrderRequest = {
-      intent: 'CAPTURE',
+      intent: CheckoutPaymentIntent.Capture,
       purchaseUnits: [
         {
           amount: {
