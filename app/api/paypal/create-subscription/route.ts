@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ordersController } from '@/lib/paypal'
-import { OrderRequest } from '@paypal/paypal-server-sdk/dist/models/orderRequest'
+import { OrderRequest } from '@paypal/paypal-server-sdk'
 
 export const runtime = 'nodejs'
 
