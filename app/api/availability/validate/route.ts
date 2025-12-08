@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { parseISO, startOfDay, parse } from 'date-fns';
 import { isSlotAvailable, BusinessHours } from '@/lib/availability';
 
+export const runtime = 'nodejs'
+
 // Función para transformar business_hours al formato esperado
 function transformBusinessHours(businessHours: any): Record<string, BusinessHours> {
   if (!businessHours || typeof businessHours !== 'object') {
