@@ -1,4 +1,4 @@
-import { Client, Environment } from '@paypal/paypal-server-sdk'
+import { Client, Environment, OrdersController } from '@paypal/paypal-server-sdk'
 
 // Initialize PayPal client
 const environment =
@@ -6,7 +6,7 @@ const environment =
     ? Environment.Production
     : Environment.Sandbox
 
-export const paypalClient = new Client({
+const client = new Client({
   clientCredentialsAuthCredentials: {
     oAuthClientId: process.env.PAYPAL_CLIENT_ID!,
     oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET!
@@ -14,6 +14,9 @@ export const paypalClient = new Client({
   environment,
   timeout: 0
 })
+
+export const paypalClient = client
+export const ordersController = new OrdersController(client)
 
 // Commission rates based on plan
 export const COMMISSION_RATES = {

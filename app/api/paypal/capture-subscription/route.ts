@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { paypalClient } from '@/lib/paypal'
+import { ordersController } from '@/lib/paypal'
 import { createClient } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Capture the order
-    const { result: captureResult } = await paypalClient.ordersController.ordersCapture({
+    const { result: captureResult } = await ordersController.captureOrder({
       id: orderId,
       prefer: 'return=representation'
     })

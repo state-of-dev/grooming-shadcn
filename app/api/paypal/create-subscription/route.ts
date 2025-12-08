@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { paypalClient } from '@/lib/paypal'
+import { ordersController } from '@/lib/paypal'
 import { OrderRequest } from '@paypal/paypal-server-sdk/dist/models/orderRequest'
 
 export const runtime = 'nodejs'
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Execute request
-    const { result } = await paypalClient.ordersController.ordersCreate({
+    const { result } = await ordersController.createOrder({
       body: orderRequest,
       prefer: 'return=representation'
     })
