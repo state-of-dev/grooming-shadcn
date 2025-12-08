@@ -18,6 +18,8 @@ interface BusinessProfile {
   business_name: string
   slug: string
   setup_completed: boolean
+  plan?: 'free' | 'pro'
+  subscription_status?: string
 }
 
 interface AuthContextType {
@@ -35,6 +37,7 @@ interface AuthContextType {
   ) => Promise<{ data?: any; error?: AuthError | null }>
   signOut: () => Promise<{ error?: AuthError | null }>
   refreshBusinessProfile: () => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -207,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     refreshBusinessProfile,
+    refreshProfile: refreshBusinessProfile, // Alias for consistency
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

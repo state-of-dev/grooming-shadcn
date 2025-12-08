@@ -1,6 +1,9 @@
+'use client'
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, CreditCard, Globe, ArrowRight, Check } from "lucide-react"
+import { UpgradeToProButton } from "@/components/paypal/upgrade-to-pro-button"
 
 export default function Home() {
   return (
@@ -158,7 +161,7 @@ export default function Home() {
                   <CardTitle className="text-2xl">Pro</CardTitle>
                   <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">RECOMENDADO</div>
                 </div>
-                <CardDescription>Todo lo que del plan Free y además:</CardDescription>
+                <CardDescription>Todo lo del plan Free y además:</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow space-y-4">
                 <div className="text-4xl font-bold">$79<span className="text-xl font-normal text-muted-foreground">/mes</span></div>
@@ -171,7 +174,9 @@ export default function Home() {
                 </ul>
               </CardContent>
               <div className="p-6 pt-0">
-                <Button className="w-full">Empezar Plan Pro</Button>
+                <UpgradeToProButton fullWidth>
+                  Empezar Plan Pro
+                </UpgradeToProButton>
               </div>
             </Card>
           </div>

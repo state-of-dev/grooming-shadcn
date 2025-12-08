@@ -58,6 +58,7 @@ export default function MarketplacePage() {
 
   const loadBusinesses = async () => {
     try {
+      // First, get all active businesses
       const { data: businesses, error } = await supabase
         .from('business_profiles')
         .select('*')
@@ -70,8 +71,28 @@ export default function MarketplacePage() {
         return
       }
 
-      setBusinesses(businesses || [])
-      setFilteredBusinesses(businesses || [])
+      // Filter businesses that have at least 1 service AND are Pro (or Free with services)
+      const businessesWithServices = await Promise.all(
+        (businesses || []).map(async (business) => {
+          const { count } = await supabase
+            .from('services')
+            .select('*', { count: 'exact', head: true })
+            .eq('business_id', business.id)
+
+          // Only show if:
+          // 1. Has at least 1 service AND
+          // 2. Is Pro plan (published in marketplace)
+          const hasServices = (count ?? 0) > 0
+          const isPro = (business as any).plan === 'pro'
+
+          return hasServices && isPro ? business : null
+        })
+      )
+
+      const validBusinesses = businessesWithServices.filter(b => b !== null) as BusinessProfile[]
+
+      setBusinesses(validBusinesses)
+      setFilteredBusinesses(validBusinesses)
     } catch (error) {
       console.error('Error loading businesses:', error)
     } finally {

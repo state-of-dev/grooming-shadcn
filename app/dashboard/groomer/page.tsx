@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Calendar, Users, Settings, CheckCircle, XCircle, Clock, MoreVertical } from 'lucide-react'
+import { Loader2, Calendar, Scissors, Globe, CheckCircle, XCircle, Clock, MoreVertical } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { UpgradeToProButton } from '@/components/paypal/upgrade-to-pro-button'
 
 type Appointment = {
   id: string
@@ -225,9 +226,7 @@ export default function GroomerDashboardPage() {
               Bienvenido, {businessProfile?.business_name || profile.full_name}!
             </p>
           </div>
-          <Button onClick={handleLogout} variant="outline">
-            Cerrar Sesión
-          </Button>
+          <UpgradeToProButton variant="outline" size="default" />
         </div>
 
 
@@ -238,27 +237,27 @@ export default function GroomerDashboardPage() {
               <CardHeader>
                 <Calendar className="h-8 w-8 mb-2 text-primary" />
                 <CardTitle>Calendario</CardTitle>
-                <CardDescription>Gestionar disponibilidad y bloqueos</CardDescription>
+                <CardDescription>Gestionar disponibilidad y horarios</CardDescription>
               </CardHeader>
             </Link>
           </Card>
 
           <Card className="hover:border-primary transition-colors cursor-pointer">
-            <Link href="/dashboard/clients">
+            <Link href="/dashboard/groomer/services">
               <CardHeader>
-                <Users className="h-8 w-8 mb-2 text-primary" />
-                <CardTitle>Clientes</CardTitle>
-                <CardDescription>Ver tus clientes y mascotas</CardDescription>
+                <Scissors className="h-8 w-8 mb-2 text-primary" />
+                <CardTitle>Servicios</CardTitle>
+                <CardDescription>Gestionar anuncios, tiempo y costos</CardDescription>
               </CardHeader>
             </Link>
           </Card>
 
           <Card className="hover:border-primary transition-colors cursor-pointer">
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/groomer/website">
               <CardHeader>
-                <Settings className="h-8 w-8 mb-2 text-primary" />
-                <CardTitle>Configuración</CardTitle>
-                <CardDescription>Servicios, horarios y más</CardDescription>
+                <Globe className="h-8 w-8 mb-2 text-primary" />
+                <CardTitle>Mi Página Web</CardTitle>
+                <CardDescription>Actualizar datos de tu estética</CardDescription>
               </CardHeader>
             </Link>
           </Card>

@@ -10,12 +10,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { PawPrint, User, LogOut, LayoutDashboard, Store } from 'lucide-react'
+import { PawPrint, User, LogOut, LayoutDashboard, Store, Sparkles } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { NotificationCenter } from '@/components/notifications/notification-center'
+import { UpgradeToProButton } from '@/components/paypal/upgrade-to-pro-button'
+import { useState } from 'react'
 
 export function Navbar() {
-  const { user, profile, loading, signOut } = useAuth()
+  const { user, profile, businessProfile, loading, signOut } = useAuth()
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
@@ -26,6 +29,9 @@ export function Navbar() {
     if (!profile) return '/dashboard'
     return profile.role === 'groomer' ? '/dashboard/groomer' : '/customer/dashboard'
   }
+
+  // Check if user is groomer and not on Pro plan
+  const showUpgradeOption = profile?.role === 'groomer' && businessProfile?.plan !== 'pro'
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -82,17 +88,30 @@ export function Navbar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/marketplace" className="cursor-pointer">
-                      <Store className="mr-2 h-4 w-4" />
-                      Marketplace
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href={getDashboardUrl()} className="cursor-pointer">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/marketplace" className="cursor-pointer">
+                      <Store className="mr-2 h-4 w-4" />
+                      Marketplace
+                    </Link>
+                  </DropdownMenuItem>
+                  {showUpgradeOption && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground">
+                        <UpgradeToProButton variant="ghost" size="sm" fullWidth compact>
+                          <div className="flex items-center justify-start w-full">
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Actualiza a PRO+
+                          </div>
+                        </UpgradeToProButton>
+                      </div>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
