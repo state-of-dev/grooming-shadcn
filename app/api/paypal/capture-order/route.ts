@@ -3,6 +3,8 @@ import { orders } from '@paypal/paypal-server-sdk'
 import { paypalClient, calculateCommission, calculatePayout } from '@/lib/paypal'
 import { createClient } from '@/lib/supabase'
 
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const { orderId } = await request.json()

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { orders } from '@paypal/paypal-server-sdk'
 import { paypalClient } from '@/lib/paypal'
 
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const { amount, currency = 'MXN', businessId, appointmentId } = await request.json()
