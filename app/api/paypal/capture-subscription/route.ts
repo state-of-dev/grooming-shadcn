@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { orders } from '@paypal/paypal-server-sdk'
 import { paypalClient } from '@/lib/paypal'
 import { createClient } from '@/lib/supabase'
 
@@ -17,11 +16,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Capture the order
-    const captureRequest = new orders.OrdersCaptureRequest(orderId)
-    captureRequest.prefer('return=representation')
-
-    const capture = await paypalClient.execute(captureRequest)
-    const captureResult = capture.result
+    const { result: captureResult } = await paypalClient.ordersController.ordersCapture({
+      id: orderId,
+      prefer: 'return=representation'
+    })
 
     if (captureResult.status !== 'COMPLETED') {
       return NextResponse.json(
@@ -32,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Get payment details
     const amount = parseFloat(
-      captureResult.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.value || '0'
+      captureResult.purchaseUnits?.[0]?.payments?.captures?.[0]?.amount?.value || '0'
     )
 
     // Update business to Pro plan

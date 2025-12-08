@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { orders } from '@paypal/paypal-server-sdk'
 import { paypalClient } from '@/lib/paypal'
+import { OrderRequest } from '@paypal/paypal-server-sdk/dist/models/orderRequest'
 
 export const runtime = 'nodejs'
 
@@ -16,32 +16,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Create order request for Pro subscription
-    const orderRequest = new orders.OrdersCreateRequest()
-    orderRequest.prefer('return=representation')
-    orderRequest.requestBody({
+    const orderRequest: OrderRequest = {
       intent: 'CAPTURE',
-      purchase_units: [
+      purchaseUnits: [
         {
           amount: {
-            currency_code: currency,
+            currencyCode: currency,
             value: amount.toFixed(2),
           },
           description: 'Plan Pro - Suscripción mensual',
-          custom_id: JSON.stringify({
+          customId: JSON.stringify({
             businessId,
             plan: 'pro',
             type: 'subscription',
           }),
         },
       ],
-    })
+    }
 
     // Execute request
-    const order = await paypalClient.execute(orderRequest)
+    const { result } = await paypalClient.ordersController.ordersCreate({
+      body: orderRequest,
+      prefer: 'return=representation'
+    })
 
     return NextResponse.json({
-      orderId: order.result.id,
-      status: order.result.status,
+      orderId: result.id,
+      status: result.status,
     })
   } catch (error) {
     console.error('Error creating PayPal subscription order:', error)

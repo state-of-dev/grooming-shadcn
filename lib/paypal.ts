@@ -1,18 +1,19 @@
-import { PayPalHttpClient, core } from '@paypal/paypal-server-sdk'
+import { Client, Environment } from '@paypal/paypal-server-sdk'
 
 // Initialize PayPal client
 const environment =
   process.env.PAYPAL_MODE === 'production'
-    ? new core.LiveEnvironment(
-        process.env.PAYPAL_CLIENT_ID!,
-        process.env.PAYPAL_CLIENT_SECRET!
-      )
-    : new core.SandboxEnvironment(
-        process.env.PAYPAL_CLIENT_ID!,
-        process.env.PAYPAL_CLIENT_SECRET!
-      )
+    ? Environment.Production
+    : Environment.Sandbox
 
-export const paypalClient = new PayPalHttpClient(environment)
+export const paypalClient = new Client({
+  clientCredentialsAuthCredentials: {
+    oAuthClientId: process.env.PAYPAL_CLIENT_ID!,
+    oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET!
+  },
+  environment,
+  timeout: 0
+})
 
 // Commission rates based on plan
 export const COMMISSION_RATES = {
