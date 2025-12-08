@@ -248,7 +248,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4 py-8">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Crear cuenta</CardTitle>
           <CardDescription>Únete a nuestra plataforma</CardDescription>
@@ -257,8 +257,8 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Role selector */}
             <div className="space-y-3">
-              <Label>Tipo de cuenta</Label>
-              <div className="grid grid-cols-2 gap-3">
+              {/* <Label>Tipo de cuenta</Label> */}
+              <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, role: 'customer' }))}
@@ -291,81 +291,84 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nombre completo</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="pl-10"
-                  placeholder="Tu nombre"
-                  disabled={isLoading}
-                />
+            {/* Basic fields in 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nombre completo</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                    className="pl-10"
+                    placeholder="Tu nombre"
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
               </div>
-              {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="pl-10"
-                  placeholder="tu@email.com"
-                  disabled={isLoading}
-                />
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className="pl-10"
+                    placeholder="tu@email.com"
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
-              {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="pl-10 pr-10"
-                  placeholder="Mínimo 6 caracteres"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    className="pl-10 pr-10"
+                    placeholder="Mínimo 6 caracteres"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
               </div>
-              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                  className="pl-10"
-                  placeholder="Repite tu contraseña"
-                  disabled={isLoading}
-                />
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    className="pl-10"
+                    placeholder="Repite tu contraseña"
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
               </div>
-              {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
             </div>
 
             {/* GROOMER FIELDS */}
@@ -374,8 +377,8 @@ export default function RegisterPage() {
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-4">Datos del Negocio</h3>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="businessName">Nombre del negocio *</Label>
                       <div className="relative">
                         <Building2 className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -407,7 +410,7 @@ export default function RegisterPage() {
                       {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-3">
                       <Label htmlFor="address">Dirección *</Label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -423,7 +426,7 @@ export default function RegisterPage() {
                       {errors.address && <p className="text-sm text-destructive">{errors.address}</p>}
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:col-span-3">
                       <Label htmlFor="description">Descripción del negocio *</Label>
                       <Textarea
                         id="description"
@@ -441,8 +444,8 @@ export default function RegisterPage() {
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-4">Primer Servicio</h3>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2 md:col-span-3">
                       <Label htmlFor="serviceName">Nombre del servicio *</Label>
                       <Input
                         id="serviceName"
@@ -454,40 +457,38 @@ export default function RegisterPage() {
                       {errors.serviceName && <p className="text-sm text-destructive">{errors.serviceName}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="servicePrice">Precio *</Label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                          <Input
-                            id="servicePrice"
-                            type="number"
-                            value={formData.servicePrice}
-                            onChange={(e) => setFormData(prev => ({ ...prev, servicePrice: e.target.value }))}
-                            className="pl-10"
-                            placeholder="350"
-                            disabled={isLoading}
-                          />
-                        </div>
-                        {errors.servicePrice && <p className="text-sm text-destructive">{errors.servicePrice}</p>}
+                    <div className="space-y-2">
+                      <Label htmlFor="servicePrice">Precio *</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="servicePrice"
+                          type="number"
+                          value={formData.servicePrice}
+                          onChange={(e) => setFormData(prev => ({ ...prev, servicePrice: e.target.value }))}
+                          className="pl-10"
+                          placeholder="350"
+                          disabled={isLoading}
+                        />
                       </div>
+                      {errors.servicePrice && <p className="text-sm text-destructive">{errors.servicePrice}</p>}
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="serviceDuration">Duración (min) *</Label>
-                        <div className="relative">
-                          <Clock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                          <Input
-                            id="serviceDuration"
-                            type="number"
-                            value={formData.serviceDuration}
-                            onChange={(e) => setFormData(prev => ({ ...prev, serviceDuration: e.target.value }))}
-                            className="pl-10"
-                            placeholder="60"
-                            disabled={isLoading}
-                          />
-                        </div>
-                        {errors.serviceDuration && <p className="text-sm text-destructive">{errors.serviceDuration}</p>}
+                    <div className="space-y-2">
+                      <Label htmlFor="serviceDuration">Duración (min) *</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="serviceDuration"
+                          type="number"
+                          value={formData.serviceDuration}
+                          onChange={(e) => setFormData(prev => ({ ...prev, serviceDuration: e.target.value }))}
+                          className="pl-10"
+                          placeholder="60"
+                          disabled={isLoading}
+                        />
                       </div>
+                      {errors.serviceDuration && <p className="text-sm text-destructive">{errors.serviceDuration}</p>}
                     </div>
                   </div>
                 </div>
@@ -627,10 +628,10 @@ export default function RegisterPage() {
             {/* CUSTOMER FIELDS */}
             {formData.role === 'customer' && (
               <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-4">Información de Contacto</h3>
+                <h3 className="font-semibold mb-4">Información de Contacto y Mascota</h3>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2 md:col-span-3">
                     <Label htmlFor="customerPhone">Teléfono *</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -645,11 +646,7 @@ export default function RegisterPage() {
                     </div>
                     {errors.customerPhone && <p className="text-sm text-destructive">{errors.customerPhone}</p>}
                   </div>
-                </div>
 
-                <h3 className="font-semibold mb-4 mt-6">Tu Primera Mascota</h3>
-
-                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="petName">Nombre de la mascota *</Label>
                     <div className="relative">
@@ -682,29 +679,27 @@ export default function RegisterPage() {
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="petBreed">Raza (opcional)</Label>
-                      <Input
-                        id="petBreed"
-                        value={formData.petBreed}
-                        onChange={(e) => setFormData(prev => ({ ...prev, petBreed: e.target.value }))}
-                        placeholder="Ej: Labrador"
-                        disabled={isLoading}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="petWeight">Peso kg (opcional)</Label>
+                    <Input
+                      id="petWeight"
+                      type="number"
+                      value={formData.petWeight}
+                      onChange={(e) => setFormData(prev => ({ ...prev, petWeight: e.target.value }))}
+                      placeholder="15"
+                      disabled={isLoading}
+                    />
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="petWeight">Peso kg (opcional)</Label>
-                      <Input
-                        id="petWeight"
-                        type="number"
-                        value={formData.petWeight}
-                        onChange={(e) => setFormData(prev => ({ ...prev, petWeight: e.target.value }))}
-                        placeholder="15"
-                        disabled={isLoading}
-                      />
-                    </div>
+                  <div className="space-y-2 md:col-span-3">
+                    <Label htmlFor="petBreed">Raza (opcional)</Label>
+                    <Input
+                      id="petBreed"
+                      value={formData.petBreed}
+                      onChange={(e) => setFormData(prev => ({ ...prev, petBreed: e.target.value }))}
+                      placeholder="Ej: Labrador"
+                      disabled={isLoading}
+                    />
                   </div>
                 </div>
               </div>

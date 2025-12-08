@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Calendar, Heart, Search, Clock, MapPin, Trash2, Eye, X, Plus } from 'lucide-react'
+import { Loader2, Calendar, Heart, Search, Clock, MapPin, Trash2, Eye, X, Plus, Settings } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -345,10 +345,10 @@ export default function CustomerDashboardPage() {
             <h1 className="text-3xl font-bold">Mi Dashboard</h1>
             <p className="text-muted-foreground">Hola, {profile.full_name}!</p>
           </div>
-          <Button asChild>
-            <Link href="/marketplace">
-              <Search className="w-4 h-4 mr-2" />
-              Buscar Grooming
+          <Button asChild variant="outline">
+            <Link href="/customer/settings">
+              <Settings className="w-4 h-4 mr-2" />
+              Configuración
             </Link>
           </Button>
         </div>
