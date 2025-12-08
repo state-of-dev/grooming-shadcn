@@ -42,6 +42,8 @@ export async function GET(
     const endDateStr = searchParams.get('end_date');
     const serviceDurationStr = searchParams.get('service_duration');
 
+    console.log('🔍 [API /availability] Request params:', { businessId, startDateStr, endDateStr, serviceDurationStr });
+
     if (!startDateStr || !serviceDurationStr) {
       return NextResponse.json(
         { error: 'Missing required parameters: start_date, service_duration' },
@@ -55,6 +57,8 @@ export async function GET(
       ? startOfDay(parseISO(endDateStr))
       : addDays(startDate, 30);
 
+    console.log('📅 [API /availability] Parsed dates:', { startDate, endDate, serviceDuration });
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -67,12 +71,17 @@ export async function GET(
       .eq('id', businessId)
       .single();
 
+    console.log('🏢 [API /availability] Business data:', { business, businessError });
+
     if (businessError || !business) {
+      console.error('❌ [API /availability] Business not found:', businessError);
       return NextResponse.json(
         { error: 'Business not found' },
         { status: 404 }
       );
     }
+
+    console.log('⏰ [API /availability] Business hours:', business.business_hours);
 
     // 2. Configuración de citas
     const { data: settings, error: settingsError } = await supabase
@@ -114,6 +123,7 @@ export async function GET(
 
     // 5. Calcular disponibilidad
     const transformedHours = transformBusinessHours(business.business_hours);
+    console.log('🔄 [API /availability] Transformed hours:', transformedHours);
 
     const availability = calculateAvailability(
       startDate,
@@ -130,6 +140,8 @@ export async function GET(
       exceptions || [],
       appointments || []
     );
+
+    console.log('✅ [API /availability] Calculated availability:', JSON.stringify(availability, null, 2));
 
     return NextResponse.json({
       business_id: businessId,

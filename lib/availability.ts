@@ -2,6 +2,17 @@
 
 import { format, addMinutes, isBefore, isAfter, parse, parseISO } from 'date-fns';
 
+// Mapa de traducción de días de inglés a español
+const DAY_TRANSLATION: Record<string, string> = {
+  'monday': 'lunes',
+  'tuesday': 'martes',
+  'wednesday': 'miércoles',
+  'thursday': 'jueves',
+  'friday': 'viernes',
+  'saturday': 'sábado',
+  'sunday': 'domingo'
+};
+
 export interface TimeSlot {
   time: string; // HH:mm format
   available: boolean;
@@ -57,7 +68,8 @@ export function generateTimeSlots(
   exceptions: AvailabilityException[] = [],
   existingAppointments: ExistingAppointment[] = []
 ): TimeSlot[] {
-  const dayName = format(date, 'EEEE').toLowerCase();
+  const dayNameEnglish = format(date, 'EEEE').toLowerCase();
+  const dayName = DAY_TRANSLATION[dayNameEnglish] || dayNameEnglish;
   const dateStr = format(date, 'yyyy-MM-dd');
   const dayHours = businessHours[dayName];
 
@@ -195,7 +207,8 @@ export function calculateAvailability(
   let currentDate = startDate;
 
   while (currentDate <= endDate) {
-    const dayName = format(currentDate, 'EEEE').toLowerCase();
+    const dayNameEnglish = format(currentDate, 'EEEE').toLowerCase();
+    const dayName = DAY_TRANSLATION[dayNameEnglish] || dayNameEnglish;
     const dayHours = businessHours[dayName];
     const isOpen = !!(dayHours && !dayHours.closed && dayHours.open && dayHours.close);
 

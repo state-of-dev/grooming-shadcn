@@ -140,6 +140,8 @@ export default function RegisterPage() {
         const baseSlug = formData.businessName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
         const slug = `${baseSlug}-${Date.now()}`
 
+        console.log('🏢 [Register] Business hours to save:', businessHours)
+
         const { data: business, error: businessError } = await supabase
           .from('business_profiles')
           .insert({
@@ -154,6 +156,8 @@ export default function RegisterPage() {
           })
           .select()
           .single()
+
+        console.log('✅ [Register] Business created:', business)
 
         if (businessError) throw businessError
 

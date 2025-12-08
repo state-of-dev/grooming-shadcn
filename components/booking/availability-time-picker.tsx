@@ -45,24 +45,30 @@ export function AvailabilityTimePicker({
 
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      const response = await fetch(
-        `/api/availability/${businessId}?start_date=${dateStr}&end_date=${dateStr}&service_duration=${serviceDuration}`
-      );
+      const url = `/api/availability/${businessId}?start_date=${dateStr}&end_date=${dateStr}&service_duration=${serviceDuration}`;
+      console.log('🔍 [AvailabilityTimePicker] Fetching availability from:', url);
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Failed to load availability');
       }
 
       const data = await response.json();
+      console.log('📊 [AvailabilityTimePicker] API Response:', data);
+
       const dayAvailability = data.availability[0];
+      console.log('📅 [AvailabilityTimePicker] Day availability:', dayAvailability);
 
       if (dayAvailability && dayAvailability.slots) {
+        console.log('✅ [AvailabilityTimePicker] Found slots:', dayAvailability.slots.length);
         setSlots(dayAvailability.slots);
       } else {
+        console.log('❌ [AvailabilityTimePicker] No slots found');
         setSlots([]);
       }
     } catch (err) {
-      console.error('Error loading availability:', err);
+      console.error('❌ [AvailabilityTimePicker] Error loading availability:', err);
       setError('Error al cargar disponibilidad');
       setSlots([]);
     } finally {
