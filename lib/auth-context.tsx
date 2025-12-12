@@ -91,18 +91,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch business profile for groomers
   const fetchBusinessProfile = async (userId: string) => {
+    console.log('[AUTH] Fetching business profile for user:', userId)
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('business_profiles')
         .select('*')
         .eq('owner_id', userId)
         .single()
 
+      if (error) {
+        console.error('[AUTH] Error fetching business profile:', error)
+        return
+      }
+
       if (data) {
+        console.log('[AUTH] Business profile loaded:', data.id, 'Plan:', data.plan)
         setBusinessProfile(data)
+      } else {
+        console.warn('[AUTH] No business profile found for user:', userId)
       }
     } catch (error) {
-      console.error('Error fetching business profile:', error)
+      console.error('[AUTH] Exception fetching business profile:', error)
     }
   }
 

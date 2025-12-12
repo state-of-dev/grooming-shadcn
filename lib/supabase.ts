@@ -3,6 +3,13 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+console.log('[SUPABASE] Initializing with:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  url: supabaseUrl?.substring(0, 30) + '...',
+  keyPrefix: supabaseAnonKey?.substring(0, 20) + '...'
+})
+
 if (!supabaseUrl) {
   throw new Error('Missing Supabase URL')
 }

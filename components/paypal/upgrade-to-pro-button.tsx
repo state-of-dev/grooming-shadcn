@@ -35,9 +35,17 @@ export function UpgradeToProButton({
 }: UpgradeToProButtonProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { businessProfile, refreshProfile } = useAuth()
+  const { businessProfile, refreshProfile, loading: authLoading } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+
+  // Debug logging
+  console.log('UpgradeToProButton - Auth state:', {
+    authLoading,
+    hasBusinessProfile: !!businessProfile,
+    businessProfileId: businessProfile?.id,
+    plan: businessProfile?.plan
+  })
 
   const handleApprove = async (data: any) => {
     try {
@@ -142,15 +150,29 @@ export function UpgradeToProButton({
     return null
   }
 
+  // Don't render if still loading or no profile
+  const isDisabled = authLoading || !businessProfile?.id
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           variant={variant}
           size={size}
+          disabled={isDisabled}
           className={`${fullWidth ? 'w-full' : ''} ${compact ? 'justify-start h-auto p-0 hover:bg-transparent' : 'justify-center'}`}
         >
-          {children || (
+          {authLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Cargando...
+            </>
+          ) : !businessProfile?.id ? (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              No disponible
+            </>
+          ) : children || (
             <>
               <Sparkles className="mr-2 h-4 w-4" />
               Actualiza a PRO+
