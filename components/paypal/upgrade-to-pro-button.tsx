@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+const PAYPAL_PLAN_ID = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID_PRO || 'P-7WJ60817PJ532925NNE52BUQ'
+
 interface UpgradeToProButtonProps {
   variant?: 'default' | 'outline' | 'ghost'
   size?: 'default' | 'sm' | 'lg'
@@ -37,29 +39,54 @@ export function UpgradeToProButton({
   const { toast } = useToast()
   const router = useRouter()
 
-  const handleApprove = async (data: any, actions: any) => {
+  const handleApprove = async (data: any) => {
     try {
       setLoading(true)
 
-      // Capture the payment
-      const response = await fetch('/api/paypal/capture-subscription', {
+      if (!businessProfile?.id) {
+        throw new Error('No se pudo cargar tu perfil de negocio')
+      }
+
+      console.log('Subscription approved:', data.subscriptionID)
+
+      // Register subscription with backend
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000'
+      const response = await fetch(`${backendUrl}/api/subscriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId: data.orderID,
-          businessId: businessProfile?.id,
+          planId: PAYPAL_PLAN_ID,
+          subscriptionId: data.subscriptionID,
+          userId: businessProfile.id,
+          userEmail: businessProfile.owner_id,
         }),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Error al procesar el pago')
+        throw new Error(result.error || 'Error registrando la suscripción')
+      }
+
+      console.log('Subscription registered:', result)
+
+      // Update business profile to Pro
+      const updateResponse = await fetch('/api/business/upgrade-to-pro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: businessProfile.id,
+          subscriptionId: data.subscriptionID,
+        }),
+      })
+
+      if (!updateResponse.ok) {
+        throw new Error('Error actualizando el plan')
       }
 
       toast({
         title: '¡Bienvenido a Pro!',
-        description: 'Tu plan ha sido actualizado exitosamente.',
+        description: 'Tu suscripción ha sido activada exitosamente.',
       })
 
       // Refresh profile to get updated plan
@@ -82,30 +109,28 @@ export function UpgradeToProButton({
     }
   }
 
-  const createOrder = async () => {
+  const createSubscription = async () => {
     try {
-      const response = await fetch('/api/paypal/create-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessId: businessProfile?.id,
-          amount: 79.00,
-          currency: 'MXN',
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al crear la orden')
+      // Validate businessProfile exists
+      if (!businessProfile?.id) {
+        console.error('Missing businessProfile:', {
+          businessProfile,
+          hasProfile: !!businessProfile,
+          id: businessProfile?.id
+        })
+        throw new Error('No se pudo cargar tu perfil de negocio. Por favor recarga la página.')
       }
 
-      return data.orderId
+      console.log('Creating PayPal subscription for business:', businessProfile.id)
+      console.log('Plan ID:', PAYPAL_PLAN_ID)
+
+      // PayPal SDK maneja la creación de la suscripción en el cliente
+      return PAYPAL_PLAN_ID
     } catch (error) {
-      console.error('Error creating order:', error)
+      console.error('Error creating subscription:', error)
       toast({
         title: 'Error',
-        description: 'No se pudo crear la orden de pago',
+        description: error instanceof Error ? error.message : 'No se pudo crear la suscripción',
         variant: 'destructive',
       })
       throw error
@@ -179,11 +204,13 @@ export function UpgradeToProButton({
                 options={{
                   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
                   currency: 'MXN',
+                  intent: 'subscription',
+                  vault: true,
                 }}
               >
                 <PayPalButtons
-                  style={{ layout: 'vertical', label: 'pay' }}
-                  createOrder={createOrder}
+                  style={{ layout: 'vertical', label: 'subscribe' }}
+                  createSubscription={createSubscription}
                   onApprove={handleApprove}
                   onError={(err) => {
                     console.error('PayPal error:', err)
